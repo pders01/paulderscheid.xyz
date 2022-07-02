@@ -1,0 +1,33 @@
+baseURL = 'https://paulderscheid.xyz/'
+defaultContentLanguage = 'de'
+title = '👋 paulderscheid.xyz'
+
+theme = 'bookAndSword'
+
+# menu = ['Über mich', 'Artikel', 'Repositorien', 'Newsletter']
+
+[menu]
+[[menu.main]]
+  identifier = 'about'
+  name = '🗿 Über mich'
+  pre = ''
+  url = '/about/'
+  weight = 10
+[[menu.main]]
+  identifier = 'articles'
+  name = '🚀 Artikel'
+  pre = ''
+  url = '/articles/'
+  weight = 20
+[[menu.main]]
+  identifier = 'repositories'
+  name = '📦 Repositorien'
+  pre = ''
+  url = '/repositories/'
+  weight = 30
+[[menu.main]]
+  identifier = 'newsletter'
+  name = '🗞 Newsletter'
+  pre = ''
+  url = '/newsletter/'
+  weight = 40

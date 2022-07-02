@@ -1,0 +1,26 @@
+{{ partial "header.html" . }}
+
+{{ $image := resources.Get "images/hero.webp" }}
+
+<div class="hero min-h-screen bg-base-200">
+  <div class="hero-content flex-col lg:flex-row-reverse gap-8">
+    <img
+      src="{{ $image.RelPermalink }}"
+      class="max-w-sm rounded-lg shadow-2xl"
+    />
+    <div>
+      <h1 class="text-5xl font-bold">🎉 Hi, ich bin Paul!</h1>
+      <p class="py-6">
+        ¾ Stack Engineer. Bibliothekar. Open-Source-Enthusiast.
+        <br>
+        Das links im Bild ist meine Freundin Layal. Auch Bibliothekarin <br>
+        und eine tolle Designerin.
+      </p>
+      <button class="btn btn-primary">👍 Neues</button>
+    </div>
+  </div>
+</div>
+
+{{ .Content }} 
+
+{{ partial "footer.html" . }}
