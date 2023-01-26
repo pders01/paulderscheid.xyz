@@ -1,5 +1,7 @@
 # Welcome to [Astro](https://astro.build)
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/39d4acfc-6500-48de-ba9c-ba3d44a657d3/deploy-status)](https://app.netlify.com/sites/elegant-saha-1ff26c/deploys)
+
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
 [![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/s/github/withastro/astro/tree/latest/examples/basics)
 
