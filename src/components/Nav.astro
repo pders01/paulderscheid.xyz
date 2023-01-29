@@ -3,9 +3,11 @@
     <li><a href="/"><strong>paulderscheid.xyz</strong></a></li>
   </ul>
   <ul>
-    <li><a href="/about">🐙 About</a></li>
-    <li><a href="/posts">🗞️ Posts</a></li>
-    <li><a href="mailto:me@paulderscheid.xyz">🫱 Get in touch</a></li>
+    <li><a href="/about">🐙 <span>About</span></a></li>
+    <li><a href="/posts">🗞️ <span>Posts</span></a></li>
+    <li>
+      <a href="mailto:me@paulderscheid.xyz">🫱 <span>Get in touch</span></a>
+    </li>
   </ul>
 </nav>
 <style>
@@ -19,5 +21,11 @@
     background: linear-gradient(to right, #b92b27, #1565c0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+
+  @media (max-width: 425px) {
+    ul:last-child span {
+      display: none;
+    }
   }
 </style>
