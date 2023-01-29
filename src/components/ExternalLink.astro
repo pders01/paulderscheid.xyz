@@ -3,7 +3,7 @@ const { href, text } = Astro.props;
 ---
 
 <external-link data-href={href}>
-    <dialog id="external-link-modal">
+    <dialog>
         <article>
             <h3>Confirm your redirect!</h3>
             <p>
@@ -16,7 +16,7 @@ const { href, text } = Astro.props;
             </footer>
         </article>
     </dialog>
-    <a href={href} id="external-link">{text}</a>
+    <a href={href}>{text}</a>
 </external-link>
 
 <script>
