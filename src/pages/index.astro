@@ -1,10 +1,62 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
+import ExternalLink from "../components/ExternalLink.astro";
 ---
 
 <Layout title="Hi, I'm Paul">
-	<h1>👋 Hi, my name is Paul.</h1>
+	<div class="grid">
+		<div>
+			<h1>👋 Hi, my name is Paul</h1>
+			<ul>
+				<li>
+					Software engineer by <ExternalLink
+						href="https://www.linkedin.com/in/paulderscheid-1726504/"
+						text="profession"
+					/>, librarian by <ExternalLink
+						href="https://www.linkedin.com/in/paulderscheid-1726504/"
+						text="education"
+					/>.
+				</li>
+				<li>
+					Working on the coolest ILS under the sun which is <ExternalLink
+						href="https://koha-community.org"
+						text="Koha"
+					/>.
+				</li>
+				<li>Loving everything technology.</li>
+			</ul>
+
+			<ul>
+				<li>
+					GitHub(s)
+					<ul>
+						<li>
+							Private → <ExternalLink
+								href="https://github.com/pders01"
+								text="github.com/pders01"
+							/>
+						</li>
+						<li>
+							Work → <ExternalLink
+								href="https://github.com/LMSCloudPaulD"
+								text="github.com/LMSCloudPaulD"
+							/>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+		<div>
+			<img
+				src="/profile.webp"
+				alt="A picture of a handsome young engineer with a lovely smirk."
+			/>
+		</div>
+	</div>
 </Layout>
 
 <style>
+	img {
+		border-radius: 50%;
+	}
 </style>

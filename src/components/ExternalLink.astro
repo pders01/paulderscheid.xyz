@@ -1,0 +1,61 @@
+---
+const { href, text } = Astro.props;
+---
+
+<external-link data-href={href}>
+    <dialog id="external-link-modal">
+        <article>
+            <h3>Confirm your redirect!</h3>
+            <p>
+                If you click Confirm you'll be redirected to <strong>{href}</strong>.<br> 
+                Are you ok with that?
+            </p>
+            <footer>
+                <a href="#cancel" role="button" class="secondary">Cancel</a>
+                <a href="#confirm" role="button">Confirm</a>
+            </footer>
+        </article>
+    </dialog>
+    <a href={href} id="external-link">{text}</a>
+</external-link>
+
+<script>
+    class ExternalLink extends HTMLElement {
+        href: string | URL;
+        cancelRedirect: HTMLAnchorElement;
+        confirmRedirect: HTMLAnchorElement;
+        externalLink: HTMLAnchorElement;
+        dialog: HTMLDialogElement;
+        constructor() {
+            super();
+            
+            this.href = this.dataset.href || '/';
+            [this.cancelRedirect, this.confirmRedirect, this.externalLink] = this.getElementsByTagName("a");
+            [this.dialog] = this.getElementsByTagName("dialog");
+
+            this.externalLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                this.toggleModal();
+                this.cancelRedirect.addEventListener("click", (e) => {
+                    this.toggleModal();
+                });
+                this.confirmRedirect.addEventListener("click", () => {
+                    this.redirect();
+                })
+            });
+        }
+
+        toggleModal() {
+            const isOpen = this.dialog.hasAttribute("open");
+            isOpen
+                ? this.dialog.removeAttribute("open")
+                : this.dialog.setAttribute("open", "");
+        }
+
+        redirect() {
+            window.location.replace(this.href);
+        }
+    }
+
+    customElements.define("external-link", ExternalLink);
+</script>
