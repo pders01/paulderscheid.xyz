@@ -1,0 +1,29 @@
+---
+const { title, snippet, author, date } = Astro.props;
+---
+
+<div>
+    <h6>
+        <mark>
+            {title}
+        </mark>
+    </h6>
+    <p>
+        {snippet}...
+    </p>
+    <small>
+        by {author} on {date}
+    </small>
+</div>
+
+<style>
+    div {
+        width: max-content;
+        margin: 0 auto;
+        padding: var(--spacing);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background-color: var(--card-background-color);
+        box-shadow: var(--card-box-shadow);
+    }
+</style>
