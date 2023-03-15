@@ -3,6 +3,11 @@ const { href, text } = Astro.props;
 ---
 
 <external-link data-href={href}>
+    <style>
+        external-link {
+            display: inline-flex;
+        }
+    </style>
     <dialog>
         <article>
             <h3>Confirm your redirect!</h3>
