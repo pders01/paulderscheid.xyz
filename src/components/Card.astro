@@ -1,16 +1,20 @@
 ---
-const { title, snippet, author, date } = Astro.props;
+const { title, snippet, author, date, collection, slug } = Astro.props;
+const href = `/${collection}/${slug}`;
 ---
 
 <div>
     <h6>
         <mark>
-            {title}
+            <a href={href}>
+                {title}
+            </a>
         </mark>
     </h6>
     <p>
         {snippet}...
     </p>
+    <slot />
     <small>
         by {author} on {date}
     </small>

@@ -9,12 +9,14 @@ const allBlogPosts = await getCollection("blog");
 
 <Layout title="Blog">
     {
-        allBlogPosts.map(({ data }) => (
+        allBlogPosts.map(({ data, collection, slug }) => (
             <Card
                 title={data.title}
                 snippet={data.snippet}
                 author={data.author}
                 date={data.date}
+                collection={collection}
+                slug={slug}
             />
         ))
     }
