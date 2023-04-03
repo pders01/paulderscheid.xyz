@@ -12,7 +12,9 @@ const { href, text } = Astro.props;
         <article>
             <h3>Confirm your redirect!</h3>
             <p>
-                If you click Confirm you'll be redirected to <strong>{href}</strong>.<br> 
+                If you click Confirm you'll be redirected to <strong
+                    >{href}</strong
+                >.<br />
                 Are you ok with that?
             </p>
             <footer>
@@ -33,20 +35,24 @@ const { href, text } = Astro.props;
         dialog: HTMLDialogElement;
         constructor() {
             super();
-            
-            this.href = this.dataset.href || '/';
-            [this.cancelRedirect, this.confirmRedirect, this.externalLink] = this.getElementsByTagName("a");
+
+            this.href = this.dataset.href || "/";
+            [this.cancelRedirect, this.confirmRedirect, this.externalLink] =
+                this.getElementsByTagName("a");
             [this.dialog] = this.getElementsByTagName("dialog");
 
             this.externalLink.addEventListener("click", (e) => {
                 e.preventDefault();
                 this.toggleModal();
-                this.cancelRedirect.addEventListener("click", (e) => {
-                    this.toggleModal();
-                });
-                this.confirmRedirect.addEventListener("click", () => {
-                    this.redirect();
-                })
+            });
+
+            this.cancelRedirect.addEventListener("click", (e) => {
+                e.preventDefault();
+                this.toggleModal();
+            });
+
+            this.confirmRedirect.addEventListener("click", () => {
+                this.redirect();
             });
         }
 
