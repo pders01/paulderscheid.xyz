@@ -1,0 +1,54 @@
+---
+layout: ../../layouts/Post.astro
+title: "vscode + perlnavigator + koha-testing-docker"
+author: "Paul Derscheid"
+date: "27 Jul 2023"
+snippet: "A quick guide on using perlnavigator in koha-testing-docker."
+link: "/blog/vscode-perlnavigator-in-ktd.mdx"
+---
+# vscode + perlnavigator + koha-testing-docker
+
+To get this working, here's what we'll need
+* vscode w/
+  * Microsoft's [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
+  * bscan's [perlnavigator](https://marketplace.visualstudio.com/items?itemName=bscan.perlnavigator) extension
+  * Optionally: Microsoft's [docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) extension
+* koha-testing-docker
+* koha
+
+Got koha-testing-docker already up and running? Great!
+If not, follow the [docs](https://gitlab.com/koha-community/koha-testing-docker#user-content-koha-testing-docker-aka-ktd).
+
+# Using the dev containers extension
+
+It's actually super straightforward.
+
+## The clicky way
+
+1. Open VSCode
+2. Open the dev containers tab 
+3. Right click the `koha-koha-1` container
+4. Choose **Attach in Current Window** or **Attach in New Window** from the context menu
+5. Click on **Open Folder**
+6. Enter `/kohadevbox/koha`
+
+## The right way ;)
+
+1. Open VSCode
+2. Hit the shortcut `Ctrl/Cmd + Shift + P`
+3. Type __Dev Containers__ and choose the entry **Dev Containers: Attach to Running Container...**
+4. Choose the `koha-koha-1` container
+5. Hit `Ctrl/Cmd + O` and enter `/kohadevbox/koha`
+
+# You're good to go
+
+Either way you can now configure perlnavigators settings to your liking and find all the definitions
+you want! Formatting and Linting is already working using the .perlcriticrc and .perltidyrc files in
+the project root.
+
+Please tidy your code before submitting patches :D
+
+PS: If you got the docker extension installed as well, you can get an overview of your running containers
+in the docker tab and just attach from there.
+
+Cheerio
