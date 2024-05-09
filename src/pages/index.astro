@@ -5,60 +5,109 @@ import ExternalLink from "../components/ExternalLink.astro";
 
 <Layout title="Hi, I'm Paul">
 	<div class="grid">
-		<div>
+		<section>
 			<h1>👋 Hi, my name is Paul</h1>
 			<ul>
 				<li>
 					Software engineer by <ExternalLink
 						href="https://www.linkedin.com/in/paulderscheid-1726504/"
 						text="profession"
-					/>, librarian by <ExternalLink
+					/>, librarian by </span><ExternalLink
 						href="https://www.linkedin.com/in/paulderscheid-1726504/"
 						text="education"
-					/>.
+					/>
 				</li>
 				<li>
 					Working on the coolest ILS under the sun which is <ExternalLink
 						href="https://koha-community.org"
 						text="Koha"
-					/>.
+					/>
 				</li>
-				<li>Loving everything technology.</li>
+				<li>🫀 everything technology</li>
 			</ul>
 
-			<ul>
-				<li>
-					GitHub(s)
+			<details>
+				<summary>🔎 Find me</summary>
+				<ul>
+					<li class="section-title">
+						<img
+							src="/svg/github.svg"
+							alt="Github's invertocat logo"
+							class="icon-sm"
+						/>GitHub
+					</li>
 					<ul>
-						<li>
-							Private → <ExternalLink
+						<li class="item-title">
+							main <ExternalLink
 								href="https://github.com/pders01"
-								text="github.com/pders01"
+								text="pders01"
 							/>
 						</li>
-						<li>
-							Work → <ExternalLink
+						<li class="item-title">
+							work <ExternalLink
 								href="https://github.com/LMSCloudPaulD"
-								text="github.com/LMSCloudPaulD"
+								text="LMSCloudPaulD"
 							/>
 						</li>
 					</ul>
-				</li>
-			</ul>
-		</div>
-		<div>
+
+					<br />
+
+					<li class="section-title">
+						<img
+							src="/svg/koha.svg"
+							alt="Koha's koru"
+							class="icon-sm"
+						/>Koha
+					</li>
+					<ul>
+						<li class="item-title">
+							<img
+								src="/svg/mattermost.svg"
+								alt="Mattermost's logo"
+								class="icon-sm"
+							/>
+							<ExternalLink
+								href="https://chat.koha-community.org"
+								text="Mattermost"
+							/> @paulderscheid
+						</li>
+					</ul>
+				</ul>
+			</details>
+		</section>
+		<section class="text-align-center">
 			<img
 				src="/profile.webp"
 				alt="A picture of a handsome young engineer with a lovely smirk."
-				width="400"
-				height="400"
+				width="300"
+				height="300"
 			/>
-		</div>
+		</section>
 	</div>
 </Layout>
 
 <style>
 	img {
 		border-radius: 50%;
+	}
+
+	.text-align-center {
+		text-align: center;
+	}
+
+	.list-style-none {
+		list-style: none;
+	}
+
+	.section-title,
+	.item-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5em;
+		width: 100%;
+	}
+	.icon-sm {
+		height: 1em;
 	}
 </style>
