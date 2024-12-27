@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ExternalLink from "../components/ExternalLink.astro";
+import { Image } from "astro:assets";
 ---
 
 <Layout title="Hi, I'm Paul">
@@ -77,11 +78,12 @@ import ExternalLink from "../components/ExternalLink.astro";
 			</details>
 		</section>
 		<section class="text-align-center">
-			<img
+			<Image
 				src="/profile.webp"
-				alt="A picture of a handsome young engineer with a lovely smirk."
+				alt="A handsome young engineer with a lovely smirk."
 				width="300"
 				height="300"
+				loading={"eager"}
 			/>
 		</section>
 	</div>
