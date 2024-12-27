@@ -2,12 +2,7 @@
 const { href, text } = Astro.props;
 ---
 
-<external-link data-href={href}>
-    <style>
-        external-link {
-            display: inline-flex;
-        }
-    </style>
+<external-link data-href={href} >
     <dialog>
         <article>
             <h3>Confirm your redirect!</h3>
@@ -25,6 +20,16 @@ const { href, text } = Astro.props;
     </dialog>
     <a href={href}>{text}</a>
 </external-link>
+
+<style>
+    external-link {
+        font-size: 0;
+    }
+
+    external-link * {
+        font-size: 1rem;
+    }
+</style>
 
 <script>
     class ExternalLink extends HTMLElement {
