@@ -1,0 +1,70 @@
+---
+layout: ../../layouts/Post.astro
+title: "Koha Hackfest 2025"
+author: "Paul Derscheid"
+date: "05 Apr 2025"
+snippet: "The hackfest this year was a blast!"
+---
+
+# Koha Hackfest 2025
+
+As always, this year's hackfest was a lot of fun!
+
+## The Hotel
+
+Ibis Vieux Port may not be the most luxurious hotel, but you can't beat the location.
+Just a few minutes away from great restaurants and bars like [Les Berthom](https://www.lesberthom.com/les-bars/marseille)
+(large selection of beers), [O'Malley's](https://irishpubmarseille.com/le-omalleys/) (great pub)
+or [La Crêpe au Carré](https://privacy-share.de/short-url/fQaXqt) (great food at a great price).
+It's always a pleasure to just have to walk a few minutes to get to a cozy bed. 😗
+
+## The Event
+
+The event took place at [Biblibre's](https://www.biblibre.com/fr/) new office in Marseille.
+The audience is growing every year, but we still managed to fit. I am very thankful for the work
+involved in hosting the event. The big topics this year for me were:
+
+### Theming options for the staff interface
+
+We just had a quick chat and discussed some tasks that are needed to make it work.
+We decided on:
+
+-   Using CSS variables for at least the colors in the first step throughout
+    our extended Bootstrap theme.
+-   Picking a default color palette for the dark mode that will be possible once we
+    clean up some outliers and inlined styles.
+-   Building a simple configuration UI to pick different themes, which will be possible
+    once we remove the hardcoded values.
+
+### The Vue Architecture Rethink
+
+It basically comes down to: there's a lot of duplicated code throughout our Vue components
+in Koha. Pedro and Matt from [Open Fifth](https://openfifth.co.uk/) built some abstractions
+(BaseComponents to extend from) to start solving the problem. It's awesome, and I want to use it!
+
+### OPAC modernization
+
+This is an idea we at [LMSCloud](https://lmscloud.de/) cooked up.
+
+1. The first step is to do the same thing as for the staff interface: move everything to CSS
+   variables.
+2. Then we'd like to build a design system and an open component library for Koha that
+   can be easily adapted to all kinds of use cases throughout the library landscape.
+3. Once we achieve that milestone, we'd like to think about some more complex changes like making the search results, record details pages, as well as global UI elements
+   more customizable with a more modular use of XSLT, which we also discussed in a separate session.
+   For dynamic content, we'd like to benefit from the Vue Architecture rethink 👆 and a little work Matt
+   and I did last year to allow for Vue islands within our SSR'd Template Toolkit pages.
+
+Stay tuned 📡
+
+## The Future
+
+The atmosphere at the hackfest was great, and I am very happy about that. I always enjoy the
+productive discussions and the engagement on Bugzilla during this particular week of the year.
+Strategic planning over beers and food is a winning combination. 🍻
+
+I am looking forward to the next hackfest in 2026!
+
+---
+
+PS: There's another [great writeup](https://domm.plix.at/perl/2025_04_koha_hackfest.html) of the hackfest from domm.
