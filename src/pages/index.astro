@@ -4,105 +4,265 @@ import { Image } from "astro:assets";
 ---
 
 <Layout title="Hi, I'm Paul">
-	<div class="grid">
-		<section>
-			<h1>👋 Hi, my name is Paul</h1>
-			<ul>
-				<li>
-					Software engineer by <a
-						href="https://www.linkedin.com/in/paulderscheid-1726504/"
-					>profession</a>, librarian by <a
-						href="https://www.linkedin.com/in/paulderscheid-1726504/"
-					>education</a>
-				</li>
-				<li>
-					Working on the coolest ILS under the sun which is <a
-						href="https://koha-community.org"
-					>Koha</a>
-				</li>
-				<li>🫀 everything technology</li>
-			</ul>
-
-			<details>
-				<summary>Find me 🔍</summary>
-				<ul>
-					<li class="section-title">
-						<img
-							src="/svg/github.svg"
-							alt="Github's invertocat logo"
-							class="icon-sm"
-						/>GitHub
-					</li>
-					<ul>
-						<li class="item-title">
-							main <a
-								href="https://github.com/pders01"
-							>pders01</a>
-						</li>
-						<li class="item-title">
-							work <a
-								href="https://github.com/LMSCloudPaulD"
-							>LMSCloudPaulD</a>
-						</li>
-					</ul>
-
-					<br />
-
-					<li class="section-title">
-						<img
-							src="/svg/koha.svg"
-							alt="Koha's koru"
-							class="icon-sm"
-						/>Koha
-					</li>
-					<ul>
-						<li class="item-title">
-							<img
-								src="/svg/mattermost.svg"
-								alt="Mattermost's logo"
-								class="icon-sm"
-							/>
-							<a
-								href="https://chat.koha-community.org"
-							>Mattermost</a> @paulderscheid
-						</li>
-					</ul>
-				</ul>
-			</details>
-		</section>
-		<section class="text-align-center">
-			<Image
-				src="/profile.webp"
-				alt="A handsome young engineer with a lovely smirk."
-				width="300"
-				height="300"
-				loading={"eager"}
-			/>
-		</section>
-	</div>
+    <section class="hero">
+        <div class="profile-card">
+            <div class="hero-image">
+                <Image
+                    src="/profile.webp"
+                    alt="A handsome young engineer with a lovely smirk."
+                    width="240"
+                    height="240"
+                    loading={"eager"}
+                    class="profile-img"
+                />
+            </div>
+            <div class="hero-content">
+                <h1>👋 Hi, I'm Paul</h1>
+                <h2 class="subtitle">
+                    Software engineer by <a
+                        href="https://www.linkedin.com/in/paulderscheid-1726504/"
+                        >profession</a
+                    >, librarian by <a
+                        href="https://www.linkedin.com/in/paulderscheid-1726504/"
+                        >education</a
+                    >
+                </h2>
+                <p class="about">
+                    Currently working on the coolest ILS under the sun: <a
+                        href="https://koha-community.org">Koha</a
+                    >. 🫀 Everything technology.
+                </p>
+            </div>
+        </div>
+        <div class="links-card">
+            <ul class="social-links">
+                <li>
+                    <a
+                        href="https://github.com/pders01"
+                        aria-label="GitHub main"
+                        class="social-link"
+                    >
+                        <img
+                            src="/svg/github.svg"
+                            alt="GitHub"
+                            class="icon-sm"
+                        />
+                        <span>GitHub (main)</span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="https://github.com/LMSCloudPaulD"
+                        aria-label="GitHub work"
+                        class="social-link"
+                    >
+                        <img
+                            src="/svg/github.svg"
+                            alt="GitHub"
+                            class="icon-sm"
+                        />
+                        <span>GitHub (work)</span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="https://koha-community.org"
+                        aria-label="Koha"
+                        class="social-link"
+                    >
+                        <img src="/svg/koha.svg" alt="Koha" class="icon-sm" />
+                        <span>Koha</span>
+                    </a>
+                </li>
+                <li>
+                    <a
+                        href="https://chat.koha-community.org"
+                        aria-label="Mattermost"
+                        class="social-link"
+                    >
+                        <img
+                            src="/svg/mattermost.svg"
+                            alt="Mattermost"
+                            class="icon-sm"
+                        />
+                        <span>Mattermost @paulderscheid</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </section>
 </Layout>
 
 <style>
-	img {
-		border-radius: 5%;
-	}
+    :root {
+        --pd-xyz-spacing: 2rem;
 
-	.text-align-center {
-		text-align: center;
-	}
+        --pd-xyz-gap-sm: calc(var(--pd-xyz-spacing) * 0.35);
+        --pd-xyz-gap-md: calc(var(--pd-xyz-spacing) * 0.5);
+        --pd-xyz-gap-lg: calc(var(--pd-xyz-spacing) * 0.6);
 
-	.list-style-none {
-		list-style: none;
-	}
+        --pd-xyz-font-size-sm: calc(var(--pico-font-size) * 0.8);
+        --pd-xyz-font-size-md: var(--pico-font-size);
+        --pd-xyz-font-size-lg: calc(var(--pico-font-size) * 1.2);
+    }
+    .hero {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: var(--pd-xyz-spacing);
+        margin-bottom: var(--pd-xyz-spacing);
+        max-width: calc(var(--pd-xyz-spacing) * 18);
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .profile-card,
+    .links-card {
+        background: var(--pico-card-background-color);
+        border-radius: var(--pico-border-radius);
+        box-shadow: var(--pico-card-box-shadow);
+        padding: var(--pd-xyz-spacing);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+    }
+    .profile-card {
+        gap: var(--pd-xyz-spacing);
+        margin-bottom: 0;
+    }
+    .links-card {
+        margin-top: 0;
+        justify-content: center;
+    }
+    .hero-image {
+        flex: 0 0 calc(var(--pd-xyz-spacing) * 7.5);
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .profile-img {
+        border-radius: var(--pico-border-radius);
+        max-width: 100%;
+        height: auto;
+        box-shadow: var(--pico-box-shadow);
+    }
+    .hero-content {
+        flex: 1 1 calc(var(--pd-xyz-spacing) * 12);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: var(--pd-xyz-gap-lg);
+    }
+    .hero-content h1,
+    .hero-content h2,
+    .hero-content p {
+        margin: 0;
+    }
+    .subtitle {
+        font-size: var(--pd-xyz-font-size-lg);
+        font-weight: 400;
+    }
+    .about {
+        color: var(--pico-muted-color);
+    }
+    .social-links {
+        display: flex;
+        flex-direction: column;
+        gap: var(--pd-xyz-gap-md);
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+    .social-links li {
+        list-style-type: none;
+    }
+    .social-link {
+        display: flex;
+        align-items: center;
+        gap: var(--pd-xyz-gap-sm);
+        padding: calc(var(--pd-xyz-spacing) * 0.35)
+            calc(var(--pd-xyz-spacing) * 0.5);
+        border-radius: var(--pico-border-radius);
+        background: var(--pico-card-sectioning-background-color);
+        box-shadow: var(--pico-box-shadow);
+        text-decoration: none;
+        color: var(--pico-color);
+        font-weight: 500;
+    }
+    .social-link:hover,
+    .social-link:focus {
+        background: var(--pico-primary-hover-background);
+        box-shadow: var(--pico-box-shadow);
+        color: var(--pico-primary-hover);
+    }
+    .social-link:hover span,
+    .social-link:focus span {
+        color: var(--pico-contrast-inverse);
+    }
+    .social-link:hover img,
+    .social-link:focus img {
+        filter: brightness(0) invert(1);
+    }
 
-	.section-title,
-	.item-title {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5em;
-		width: 100%;
-	}
-	.icon-sm {
-		height: 1em;
-	}
+    .icon-sm {
+        height: calc(var(--pd-xyz-spacing) * 0.75);
+    }
+    @media (prefers-color-scheme: dark) {
+        .social-link:hover span,
+        .social-link:focus span {
+            color: var(--pico-contrast-hover);
+        }
+    }
+
+    @media (max-width: 700px) {
+        .hero {
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 0.5rem;
+            min-width: 0;
+            gap: var(--pd-xyz-gap-lg);
+        }
+        .hero-content {
+            flex: 1 1 0;
+        }
+        .profile-card,
+        .links-card {
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            min-width: 0;
+            padding: 1.5rem 1rem;
+            margin: 0;
+        }
+        .profile-card {
+            margin-bottom: calc(var(--pd-xyz-spacing) * 0.25);
+        }
+        .links-card {
+            margin-top: calc(var(--pd-xyz-spacing) * 0.25);
+        }
+        .hero-image {
+            width: 100%;
+            margin-bottom: calc(var(--pd-xyz-spacing) * 0.6);
+        }
+        .hero-content {
+            min-width: 0;
+            width: 100%;
+            align-items: center;
+            text-align: center;
+            gap: var(--pd-xyz-gap-md);
+        }
+        .social-links {
+            width: 100%;
+            gap: var(--pd-xyz-gap-sm);
+        }
+        .social-link {
+            justify-content: center;
+            width: 100%;
+            font-size: var(--pd-xyz-font-size-md);
+            padding: calc(var(--pd-xyz-spacing) * 0.45)
+                calc(var(--pd-xyz-spacing) * 0.25);
+        }
+    }
 </style>
