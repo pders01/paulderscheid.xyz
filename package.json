@@ -15,5 +15,8 @@
     "@astrojs/sitemap": "^3.4.1",
     "@picocss/pico": "^2.1.1",
     "astro": "^5.11.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8"
   }
 }
