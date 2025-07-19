@@ -1,6 +1,9 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Image } from "astro:assets";
+import SpotlightButton from "../components/SpotlightButton.astro";
+import ProjectList from "../components/ProjectList.astro";
+import ProjectItem from "../components/ProjectItem.astro";
 ---
 
 <Layout title="Hi, I'm Paul">
@@ -36,19 +39,37 @@ import { Image } from "astro:assets";
         </div>
         <div class="links-card">
             <ul class="social-links">
-                <li>
-                    <a
-                        href="https://github.com/pders01"
-                        aria-label="GitHub main"
-                        class="social-link"
-                    >
-                        <img
-                            src="/svg/github.svg"
-                            alt="GitHub"
-                            class="icon-sm"
-                        />
-                        <span>GitHub (main)</span>
-                    </a>
+                <li class="github-account">
+                    <div class="github-main-container">
+                        <a
+                            href="https://github.com/pders01"
+                            aria-label="GitHub main"
+                            class="social-link github-main"
+                        >
+                            <img
+                                src="/svg/github.svg"
+                                alt="GitHub"
+                                class="icon-sm"
+                            />
+                            <span>GitHub (main)</span>
+                        </a>
+                        <SpotlightButton projectListId="project-list">
+                            <ProjectList id="project-list" position="right">
+                                <ProjectItem
+                                    href="https://github.com/pders01/sp"
+                                    title="sp - scratchpad"
+                                    projectTitle="sp"
+                                    description="Daily scratchpad for emptying your (and my) mind. Can also be your <a href='https://mikebabb.com/blog/engineering-daybooks/'>engineering daybook</a>."
+                                />
+                                <ProjectItem
+                                    href="https://github.com/pders01/md"
+                                    title="md - markdown server"
+                                    projectTitle="md"
+                                    description="A simple CLI tool that serves markdown files as HTML with beautiful Tailwind CSS styling and automatic dark/light theme support."
+                                />
+                            </ProjectList>
+                        </SpotlightButton>
+                    </div>
                 </li>
                 <li>
                     <a
@@ -209,6 +230,24 @@ import { Image } from "astro:assets";
     .icon-sm {
         height: calc(var(--pd-xyz-spacing) * 0.75);
     }
+
+    /* GitHub Account with Projects */
+    .github-account {
+        position: relative;
+    }
+
+    .github-main-container {
+        display: flex;
+        align-items: center;
+        gap: var(--pd-xyz-gap-sm);
+    }
+
+    .github-main {
+        flex: 3;
+        position: relative;
+        z-index: 2;
+    }
+
     @media (prefers-color-scheme: dark) {
         .social-link:hover span,
         .social-link:focus span {
@@ -263,6 +302,20 @@ import { Image } from "astro:assets";
             font-size: var(--pd-xyz-font-size-md);
             padding: calc(var(--pd-xyz-spacing) * 0.45)
                 calc(var(--pd-xyz-spacing) * 0.25);
+        }
+
+        .github-account {
+            position: static;
+        }
+
+        .github-main-container {
+            flex-direction: column;
+            gap: calc(var(--pd-xyz-spacing) * 0.25);
+            width: 100%;
+        }
+
+        .github-main {
+            width: 100%;
         }
     }
 </style>

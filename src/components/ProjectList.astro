@@ -1,0 +1,83 @@
+---
+export interface Props {
+    id: string;
+    position?: "left" | "center" | "right";
+}
+
+const { id, position = "center" } = Astro.props;
+---
+
+<ul class="project-list" id={id} data-position={position}>
+    <slot />
+</ul>
+
+<style>
+    .project-list {
+        display: none;
+        position: absolute;
+        top: 100%;
+        background: var(--pico-card-sectioning-background-color);
+        border-radius: var(--pico-border-radius) var(--pico-border-radius) 0 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: calc(var(--pd-xyz-spacing) * 0.25);
+        margin: 0;
+        list-style: none;
+        z-index: 100;
+        border-top: 1px solid var(--pico-card-border-color);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: calc(var(--pd-xyz-spacing) * 10);
+    }
+
+    .project-list[data-position="left"] {
+        left: 0;
+        transform: translateY(-10px);
+    }
+
+    .project-list[data-position="center"] {
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+    .project-list[data-position="right"] {
+        right: 0;
+        transform: translateY(-10px);
+    }
+
+    .project-list li {
+        list-style-type: none;
+    }
+
+    .project-list.expanded {
+        display: block;
+        opacity: 1;
+    }
+
+    .project-list[data-position="left"].expanded {
+        transform: translateY(0);
+    }
+
+    .project-list[data-position="center"].expanded {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .project-list[data-position="right"].expanded {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 700px) {
+        .project-list {
+            position: static;
+            box-shadow: none;
+            border-top: none;
+            border-radius: var(--pico-border-radius);
+            margin: calc(var(--pd-xyz-spacing) * 0.25) auto 0;
+            opacity: 1;
+            transform: none;
+        }
+
+        .project-list.expanded {
+            display: block;
+        }
+    }
+</style>

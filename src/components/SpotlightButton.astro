@@ -1,0 +1,90 @@
+---
+export interface Props {
+    projectListId: string;
+}
+
+const { projectListId } = Astro.props;
+---
+
+<div class="spotlight-container">
+    <button
+        class="spotlight-btn"
+        aria-label="Show projects"
+        data-project-list={projectListId}
+    >
+        Spotlight
+    </button>
+    <slot />
+</div>
+
+<script>
+    const spotlightButtons = document.querySelectorAll(".spotlight-btn");
+
+    spotlightButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const projectListId = button.getAttribute("data-project-list");
+            if (!projectListId) return;
+
+            const projectList = document.getElementById(projectListId);
+            if (!projectList) return;
+
+            const isExpanded = projectList.classList.contains("expanded");
+
+            if (isExpanded) {
+                projectList.classList.remove("expanded");
+                button.textContent = "Spotlight";
+                button.setAttribute("aria-label", "Show projects");
+            } else {
+                projectList.classList.add("expanded");
+                button.textContent = "Hide";
+                button.setAttribute("aria-label", "Hide projects");
+            }
+        });
+    });
+</script>
+
+<style>
+    .spotlight-container {
+        position: relative;
+        flex: 1;
+    }
+
+    .spotlight-btn {
+        color: var(--pico-primary-inverse);
+        background: linear-gradient(90deg, crimson, var(--pico-primary));
+        border: none;
+        border-radius: calc(var(--pico-border-radius) * 0.75);
+        padding: calc(var(--pd-xyz-spacing) * 0.25)
+            calc(var(--pd-xyz-spacing) * 0.5);
+        font-size: var(--pd-xyz-font-size-sm);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        display: block;
+        width: 100%;
+    }
+
+    .spotlight-btn:hover,
+    .spotlight-btn:focus {
+        background: linear-gradient(135deg, crimson, var(--pico-primary));
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (max-width: 700px) {
+        .spotlight-container {
+            position: static;
+            width: 100%;
+        }
+
+        .spotlight-btn {
+            width: 100%;
+            justify-content: center;
+            padding: calc(var(--pd-xyz-spacing) * 0.35)
+                calc(var(--pd-xyz-spacing) * 0.5);
+            font-size: var(--pd-xyz-font-size-md);
+            margin-top: calc(var(--pd-xyz-spacing) * 0.25);
+        }
+    }
+</style>
