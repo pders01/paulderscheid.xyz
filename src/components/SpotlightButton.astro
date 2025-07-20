@@ -50,12 +50,11 @@ const { projectListId } = Astro.props;
     }
 
     .spotlight-btn {
-        color: var(--pico-primary-inverse);
-        background: linear-gradient(90deg, crimson, var(--pico-primary));
-        border: none;
-        border-radius: calc(var(--pico-border-radius) * 0.75);
-        padding: calc(var(--pd-xyz-spacing) * 0.25)
-            calc(var(--pd-xyz-spacing) * 0.5);
+        color: var(--pd-xyz-spotlight-color);
+        background: var(--pd-xyz-spotlight-gradient);
+        border: var(--pd-xyz-spotlight-border-width) solid var(--pd-xyz-spotlight-gradient);
+        border-radius: var(--pico-border-radius);
+        padding: calc(var(--pd-xyz-spacing) * 0.25);
         font-size: var(--pd-xyz-font-size-sm);
         font-weight: 500;
         cursor: pointer;
@@ -67,7 +66,7 @@ const { projectListId } = Astro.props;
 
     .spotlight-btn:hover,
     .spotlight-btn:focus {
-        background: linear-gradient(135deg, crimson, var(--pico-primary));
+        background: var(--pd-xyz-spotlight-gradient-hover);
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
@@ -81,8 +80,8 @@ const { projectListId } = Astro.props;
         .spotlight-btn {
             width: 100%;
             justify-content: center;
-            padding: calc(var(--pd-xyz-spacing) * 0.35)
-                calc(var(--pd-xyz-spacing) * 0.5);
+            padding: calc(var(--pd-xyz-spacing) * 0.45)
+                calc(var(--pd-xyz-spacing) * 0.25);
             font-size: var(--pd-xyz-font-size-md);
             margin-top: calc(var(--pd-xyz-spacing) * 0.25);
         }
