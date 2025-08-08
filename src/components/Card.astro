@@ -3,19 +3,9 @@ const { title, snippet, author, date, collection, slug } = Astro.props;
 const href = `/${collection}/${slug}`;
 ---
 
-<div>
-    <h6>
-        <mark>
-            <a href={href}>
-                {title}
-            </a>
-        </mark>
-    </h6>
-    <p>
-        {snippet}
-    </p>
+<article class="card p-4 space-y-2">
+    <a href={href} class="link text-lg font-semibold">{title}</a>
+    <p class="text-gray-600">{snippet}</p>
     <slot />
-    <small>
-        by {author} on {date}
-    </small>
-</div>
+    <small class="text-gray-500">by {author} on {date}</small>
+</article>

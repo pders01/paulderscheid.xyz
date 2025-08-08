@@ -1,10 +1,10 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import Layout from '../../layouts/Layout.astro';
 
-import { getCollection } from "astro:content";
+import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
-    const allBlogPosts = await getCollection("blog");
+    const allBlogPosts = await getCollection('blog');
     return allBlogPosts.map((entry) => {
         return {
             params: { slug: entry.slug },
@@ -19,6 +19,8 @@ const { Content } = await entry.render();
 ---
 
 <Layout title={title}>
-    <Content />
-    <p>Written by {author} on {date}</p>
+    <article class="prose max-w-3xl mx-auto">
+        <Content />
+        <p class="text-sm text-gray-500">Written by {author} on {date}</p>
+    </article>
 </Layout>

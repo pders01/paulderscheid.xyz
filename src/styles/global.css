@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+@import 'basecoat-css';
+@plugin "@tailwindcss/typography";
+
+:root {
+  --brand: #1565c0;
+  --brand-700: #0e4ea2;
+  --accent: #b92b27;
+}
+
+.brand-gradient-text {
+  background: linear-gradient(to right, var(--accent), var(--brand));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-brand {
+  color: #fff;
+  background-image: linear-gradient(135deg, var(--accent), var(--brand));
+  border: 0;
+}
+.btn-brand:hover,
+.btn-brand:focus {
+  background-image: linear-gradient(135deg, var(--accent), var(--brand-700));
+}

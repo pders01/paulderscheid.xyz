@@ -1,31 +1,14 @@
-<nav class="container">
-  <ul>
-    <li><a href="/"><strong>paulderscheid.xyz</strong></a></li>
-  </ul>
-  <ul>
-    <li><a href="/about">🐙 <span>About</span></a></li>
-    <li><a href="/blog">🗞️ <span>Blog</span></a></li>
-    <li>
-      <a href="mailto:me@paulderscheid.xyz">🫱 <span>Get in touch</span></a>
-    </li>
-  </ul>
-</nav>
-<style>
-  ul:first-child {
-    background: #b92b27; /* fallback for old browsers */
-    background: -webkit-linear-gradient(
-      to right,
-      #b92b27,
-      #1565c0
-    ); /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to right, #b92b27, #1565c0);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  @media (max-width: 425px) {
-    ul:last-child span {
-      display: none;
-    }
-  }
-</style>
+<header class="container mx-auto py-8 px-4">
+    <div class="flex items-center justify-between">
+        <a href="/" class="brand-gradient-text font-semibold"
+            >paulderscheid.xyz</a
+        >
+        <nav class="flex items-center gap-3">
+            <a href="/about">🐙 <span class="hidden sm:inline">About</span></a>
+            <a href="/blog">🗞️ <span class="hidden sm:inline">Blog</span></a>
+            <a href="mailto:me@paulderscheid.xyz"
+                >🫱 <span class="hidden sm:inline">Get in touch</span></a
+            >
+        </nav>
+    </div>
+</header>

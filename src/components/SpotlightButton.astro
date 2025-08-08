@@ -8,7 +8,8 @@ const { projectListId } = Astro.props;
 
 <div class="spotlight-container">
     <button
-        class="spotlight-btn"
+        class="btn btn-brand w-full text-sm"
+        id="spotlight-btn"
         aria-label="Show projects"
         data-project-list={projectListId}
     >
@@ -18,26 +19,26 @@ const { projectListId } = Astro.props;
 </div>
 
 <script>
-    const spotlightButtons = document.querySelectorAll(".spotlight-btn");
+    const spotlightButtons = document.querySelectorAll('#spotlight-btn');
 
     spotlightButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            const projectListId = button.getAttribute("data-project-list");
+        button.addEventListener('click', () => {
+            const projectListId = button.getAttribute('data-project-list');
             if (!projectListId) return;
 
             const projectList = document.getElementById(projectListId);
             if (!projectList) return;
 
-            const isExpanded = projectList.classList.contains("expanded");
+            const isExpanded = projectList.classList.contains('expanded');
 
             if (isExpanded) {
-                projectList.classList.remove("expanded");
-                button.textContent = "Spotlight";
-                button.setAttribute("aria-label", "Show projects");
+                projectList.classList.remove('expanded');
+                button.textContent = 'Spotlight';
+                button.setAttribute('aria-label', 'Show projects');
             } else {
-                projectList.classList.add("expanded");
-                button.textContent = "Hide";
-                button.setAttribute("aria-label", "Hide projects");
+                projectList.classList.add('expanded');
+                button.textContent = 'Hide';
+                button.setAttribute('aria-label', 'Hide projects');
             }
         });
     });
@@ -49,26 +50,9 @@ const { projectListId } = Astro.props;
         flex: 1;
     }
 
-    .spotlight-btn {
-        color: var(--pd-xyz-spotlight-color);
-        background: var(--pd-xyz-spotlight-gradient);
-        border: var(--pd-xyz-spotlight-border-width) solid var(--pd-xyz-spotlight-gradient);
-        border-radius: var(--pico-border-radius);
-        padding: calc(var(--pd-xyz-spacing) * 0.25);
-        font-size: var(--pd-xyz-font-size-sm);
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-        display: block;
-        width: 100%;
-    }
-
-    .spotlight-btn:hover,
-    .spotlight-btn:focus {
-        background: var(--pd-xyz-spotlight-gradient-hover);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    .btn-brand:hover,
+    .btn-brand:focus {
+        transform: var(--pd-xyz-transform-y-default);
     }
 
     @media (max-width: 700px) {

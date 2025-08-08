@@ -1,21 +1,21 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { Image } from "astro:assets";
-import SpotlightButton from "../components/SpotlightButton.astro";
-import ProjectList from "../components/ProjectList.astro";
-import ProjectItem from "../components/ProjectItem.astro";
+import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import SpotlightButton from '../components/SpotlightButton.astro';
+import ProjectList from '../components/ProjectList.astro';
+import ProjectItem from '../components/ProjectItem.astro';
 ---
 
 <Layout title="Hi, I'm Paul">
-    <section class="hero">
-        <div class="profile-card">
+    <section class="hero max-w-3xl mx-auto">
+        <div class="profile-card card p-8">
             <div class="hero-image">
                 <Image
                     src="/profile.webp"
                     alt="A handsome young engineer with a lovely smirk."
                     width="240"
                     height="240"
-                    loading={"eager"}
+                    loading={'eager'}
                     class="profile-img"
                 />
             </div>
@@ -37,7 +37,7 @@ import ProjectItem from "../components/ProjectItem.astro";
                 </p>
             </div>
         </div>
-        <div class="links-card">
+        <div class="links-card card p-8">
             <ul class="social-links">
                 <li class="github-account">
                     <div class="github-main-container">
@@ -122,14 +122,32 @@ import ProjectItem from "../components/ProjectItem.astro";
         --pd-xyz-gap-md: calc(var(--pd-xyz-spacing) * 0.5);
         --pd-xyz-gap-lg: calc(var(--pd-xyz-spacing) * 0.6);
 
-        --pd-xyz-font-size-sm: calc(var(--pico-font-size) * 0.8);
-        --pd-xyz-font-size-md: var(--pico-font-size);
-        --pd-xyz-font-size-lg: calc(var(--pico-font-size) * 1.2);
+        --pd-xyz-font-size-sm: 0.875rem;
+        --pd-xyz-font-size-md: 1rem;
+        --pd-xyz-font-size-lg: 1.25rem;
 
-        --pd-xyz-spotlight-gradient: linear-gradient(90deg, crimson, var(--pico-primary));
-        --pd-xyz-spotlight-gradient-hover: linear-gradient(135deg, crimson, var(--pico-primary));
-        --pd-xyz-spotlight-color: var(--pico-primary-inverse);
+        --pd-xyz-spotlight-gradient: linear-gradient(
+            90deg,
+            crimson,
+            var(--brand)
+        );
+        --pd-xyz-spotlight-gradient-hover: linear-gradient(
+            135deg,
+            crimson,
+            var(--brand)
+        );
+        --pd-xyz-spotlight-color: white;
         --pd-xyz-spotlight-border-width: calc(var(--pd-xyz-spacing) * 0.05);
+
+        --pd-xyz-background-color: hsl(210, 10%, 98%);
+        --pd-xyz-text-color: hsl(210, 10%, 10%);
+        --pd-xyz-text-color-secondary: hsl(210, 0%, 50%);
+
+        --pd-xyz-transform-y-default: translateY(-2px);
+        @media (prefers-color-scheme: dark) {
+            --pd-xyz-background-color: hsl(210, 10%, 10%);
+            --pd-xyz-text-color: hsl(210, 10%, 98%);
+        }
     }
     .hero {
         display: flex;
@@ -137,15 +155,14 @@ import ProjectItem from "../components/ProjectItem.astro";
         align-items: flex-start;
         gap: var(--pd-xyz-spacing);
         margin-bottom: var(--pd-xyz-spacing);
-        max-width: calc(var(--pd-xyz-spacing) * 18);
         margin-left: auto;
         margin-right: auto;
     }
     .profile-card,
     .links-card {
-        background: var(--pico-card-background-color);
-        border-radius: var(--pico-border-radius);
-        box-shadow: var(--pico-card-box-shadow);
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+            0 1px 2px -1px rgba(0, 0, 0, 0.1);
         padding: var(--pd-xyz-spacing);
         display: flex;
         flex-direction: row;
@@ -168,10 +185,10 @@ import ProjectItem from "../components/ProjectItem.astro";
         align-items: center;
     }
     .profile-img {
-        border-radius: var(--pico-border-radius);
+        border-radius: 0.75rem;
         max-width: 100%;
         height: auto;
-        box-shadow: var(--pico-box-shadow);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
     .hero-content {
         flex: 1 1 calc(var(--pd-xyz-spacing) * 12);
@@ -191,7 +208,7 @@ import ProjectItem from "../components/ProjectItem.astro";
         font-weight: 400;
     }
     .about {
-        color: var(--pico-muted-color);
+        color: rgb(107 114 128);
     }
     .social-links {
         display: flex;
@@ -210,26 +227,10 @@ import ProjectItem from "../components/ProjectItem.astro";
         gap: var(--pd-xyz-gap-sm);
         padding: calc(var(--pd-xyz-spacing) * 0.35)
             calc(var(--pd-xyz-spacing) * 0.5);
-        border-radius: var(--pico-border-radius);
-        background: var(--pico-card-sectioning-background-color);
-        box-shadow: var(--pico-box-shadow);
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         text-decoration: none;
-        color: var(--pico-color);
         font-weight: 500;
-    }
-    .social-link:hover,
-    .social-link:focus {
-        background: var(--pico-primary-hover-background);
-        box-shadow: var(--pico-box-shadow);
-        color: var(--pico-primary-hover);
-    }
-    .social-link:hover span,
-    .social-link:focus span {
-        color: var(--pico-contrast-inverse);
-    }
-    .social-link:hover img,
-    .social-link:focus img {
-        filter: brightness(0) invert(1);
     }
 
     .icon-sm {
@@ -253,10 +254,17 @@ import ProjectItem from "../components/ProjectItem.astro";
         z-index: 2;
     }
 
+    .social-link:hover {
+        transform: var(--pd-xyz-transform-y-default);
+        background-color: var(--pd-xyz-background-color);
+        color: var(--pd-xyz-text-color);
+    }
+
     @media (prefers-color-scheme: dark) {
         .social-link:hover span,
         .social-link:focus span {
-            color: var(--pico-contrast-hover);
+            background-color: var(--pd-xyz-background-color);
+            color: var(--pd-xyz-text-color);
         }
     }
 

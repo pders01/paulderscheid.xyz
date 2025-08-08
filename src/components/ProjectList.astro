@@ -1,13 +1,17 @@
 ---
 export interface Props {
     id: string;
-    position?: "left" | "center" | "right";
+    position?: 'left' | 'center' | 'right';
 }
 
-const { id, position = "center" } = Astro.props;
+const { id, position = 'center' } = Astro.props;
 ---
 
-<ul class="project-list" id={id} data-position={position}>
+<ul
+    class="project-list rounded-md border border-neutral-200 dark:border-neutral-800 shadow-lg p-2 bg-white dark:bg-neutral-900 w-72"
+    id={id}
+    data-position={position}
+>
     <slot />
 </ul>
 
@@ -16,30 +20,24 @@ const { id, position = "center" } = Astro.props;
         display: none;
         position: absolute;
         top: 100%;
-        background: var(--pico-card-sectioning-background-color);
-        border-radius: var(--pico-border-radius);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        padding: calc(var(--pd-xyz-spacing) * 0.25);
         margin: 0;
         list-style: none;
         z-index: 100;
-        border-top: 1px solid var(--pico-card-border-color);
         opacity: 0;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        width: calc(var(--pd-xyz-spacing) * 10);
     }
 
-    .project-list[data-position="left"] {
+    .project-list[data-position='left'] {
         left: 0;
         transform: translateY(-10px);
     }
 
-    .project-list[data-position="center"] {
+    .project-list[data-position='center'] {
         left: 50%;
         transform: translateX(-50%) translateY(-10px);
     }
 
-    .project-list[data-position="right"] {
+    .project-list[data-position='right'] {
         right: 0;
         transform: translateY(-10px);
     }
@@ -53,15 +51,15 @@ const { id, position = "center" } = Astro.props;
         opacity: 1;
     }
 
-    .project-list[data-position="left"].expanded {
+    .project-list[data-position='left'].expanded {
         transform: translateY(0);
     }
 
-    .project-list[data-position="center"].expanded {
+    .project-list[data-position='center'].expanded {
         transform: translateX(-50%) translateY(0);
     }
 
-    .project-list[data-position="right"].expanded {
+    .project-list[data-position='right'].expanded {
         transform: translateY(0);
     }
 
@@ -69,13 +67,11 @@ const { id, position = "center" } = Astro.props;
         .project-list {
             position: static;
             box-shadow: none;
-            border-top: none;
-            border-radius: var(--pico-border-radius);
-            margin: calc(var(--pd-xyz-spacing) * 0.25) auto 0;
+            margin: 0.5rem auto 0;
             opacity: 1;
             transform: none;
+            width: 100%;
         }
-
         .project-list.expanded {
             display: block;
         }

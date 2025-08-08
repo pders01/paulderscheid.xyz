@@ -9,16 +9,19 @@ export interface Props {
 const { href, title, projectTitle, description } = Astro.props;
 ---
 
-<li class="project-item">
-    <div class="project-card">
-        <a href={href} aria-label={title} class="project-title-link">
+<li class="list-none m-2">
+    <div class="card p-0 overflow-hidden">
+        <a href={href} aria-label={title} class="block p-4 link font-semibold">
             {projectTitle}
         </a>
         {
             description && (
                 <>
-                    <div class="project-separator" />
-                    <p class="project-description" set:html={description} />
+                    <div class="item-divider" />
+                    <p
+                        class="item-desc m-0 p-4 text-sm leading-relaxed"
+                        set:html={description}
+                    />
                 </>
             )
         }
@@ -26,72 +29,20 @@ const { href, title, projectTitle, description } = Astro.props;
 </li>
 
 <style>
-    .project-item {
-        list-style-type: none;
-        border: 1px solid var(--pico-card-border-color);
-        border-radius: calc(var(--pico-border-radius) * 2);
+    .card:hover {
+        transform: var(--pd-xyz-transform-y-default);
     }
-
-    .project-item:last-child {
-        border-bottom: 1px solid var(--pico-card-border-color);
-    }
-
-    .project-card {
-        background: var(--pico-background-color);
-        transition: background-color 0.2s ease;
-        border-radius: calc(var(--pico-border-radius) * 2);
-    }
-
-    .project-card:hover {
-        background: var(--pico-card-sectioning-background-color);
-    }
-
-    .project-title-link {
-        display: block;
-        padding: calc(var(--pd-xyz-spacing) * 0.5);
-        color: var(--pico-primary-color);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: var(--pd-xyz-font-size-md);
-        transition: color 0.2s ease;
-    }
-
-    .project-title-link:hover {
-        color: var(--pico-primary-hover);
-    }
-
-    .project-separator {
+    .item-divider {
         height: 1px;
-        background: var(--pico-card-border-color);
         width: 100%;
+        background: var(--pd-xyz-background-color);
     }
-
-    .project-description {
-        margin: 0;
-        padding: calc(var(--pd-xyz-spacing) * 0.5);
-        font-size: var(--pd-xyz-font-size-sm);
-        color: var(--pico-muted-color);
-        line-height: 1.5;
+    .item-desc {
+        color: var(--pd-xyz-text-color-secondary);
     }
-
-    .project-description a {
-        color: var(--pico-primary-color);
-        text-decoration: underline;
-    }
-
-    .project-description a:hover {
-        color: var(--pico-primary-hover);
-    }
-
-    @media (max-width: 700px) {
-        .project-title-link {
-            padding: calc(var(--pd-xyz-spacing) * 0.75);
-            font-size: var(--pd-xyz-font-size-lg);
-        }
-
-        .project-description {
-            padding: calc(var(--pd-xyz-spacing) * 0.75);
-            font-size: var(--pd-xyz-font-size-md);
+    @media (prefers-color-scheme: dark) {
+        .item-divider {
+            background: var(--pd-xyz-text-color-secondary);
         }
     }
 </style>

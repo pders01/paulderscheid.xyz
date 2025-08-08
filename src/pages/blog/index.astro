@@ -1,27 +1,27 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import Card from "../../components/Card.astro";
+import Layout from '../../layouts/Layout.astro';
+import Card from '../../components/Card.astro';
 
-import { getCollection } from "astro:content";
+import { getCollection } from 'astro:content';
 
-const allBlogPosts = await getCollection("blog");
+const allBlogPosts = await getCollection('blog');
 
 allBlogPosts.sort(
-    (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
+    (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
 ---
 
 <Layout title="Blog">
-    <div class="grid">
+    <div class="grid gap-4 sm:grid-cols-3">
         {
             allBlogPosts.map(({ data, collection, slug }) => (
                 <Card
-                title={data.title}
-                snippet={data.snippet}
-                author={data.author}
-                date={data.date}
-                collection={collection}
-                slug={slug}
+                    title={data.title}
+                    snippet={data.snippet}
+                    author={data.author}
+                    date={data.date}
+                    collection={collection}
+                    slug={slug}
                 />
             ))
         }
