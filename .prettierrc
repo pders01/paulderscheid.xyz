@@ -11,6 +11,14 @@
             "options": {
                 "parser": "astro"
             }
+        },
+        {
+            "files": "*.mdx",
+            "options": {
+                "parser": "mdx",
+                "proseWrap": "always",
+                "printWidth": 100
+            }
         }
     ]
 }

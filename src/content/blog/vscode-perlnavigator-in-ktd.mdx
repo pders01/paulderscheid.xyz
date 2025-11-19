@@ -10,14 +10,20 @@ link: "/blog/vscode-perlnavigator-in-ktd.mdx"
 To get this working, here's what we'll need
 
 - vscode w/
-    - Microsoft's [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
-    - bscan's [perlnavigator](https://marketplace.visualstudio.com/items?itemName=bscan.perlnavigator) extension
-    - Optionally: Microsoft's [docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) extension
+    - Microsoft's
+      [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+      extension
+    - bscan's
+      [perlnavigator](https://marketplace.visualstudio.com/items?itemName=bscan.perlnavigator)
+      extension
+    - Optionally: Microsoft's
+      [docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
+      extension
 - koha-testing-docker
 - koha
 
-Got koha-testing-docker already up and running? Great!
-If not, follow the [docs](https://gitlab.com/koha-community/koha-testing-docker#user-content-koha-testing-docker-aka-ktd).
+Got koha-testing-docker already up and running? Great! If not, follow the
+[docs](https://gitlab.com/koha-community/koha-testing-docker#user-content-koha-testing-docker-aka-ktd).
 
 # Using the dev containers extension
 
@@ -42,18 +48,18 @@ It's actually super straightforward.
 
 ## There's one more thing
 
-The last thing you'll need to do is to install the perlnavigator extension into the container.
-Just open the extensions tab and click **Install in Container koha/ko..**
+The last thing you'll need to do is to install the perlnavigator extension into the container. Just
+open the extensions tab and click **Install in Container koha/ko..**
 
 # You're good to go
 
-You can now configure perlnavigators settings to your liking and find all the definitions
-you want! Formatting and Linting is already working using the .perlcriticrc and .perltidyrc files in
-the project root.
+You can now configure perlnavigators settings to your liking and find all the definitions you want!
+Formatting and Linting is already working using the .perlcriticrc and .perltidyrc files in the
+project root.
 
 Please tidy your code before submitting patches :D
 
-PS: If you got the docker extension installed as well, you can get an overview of your running containers
-in the docker tab and just attach from there.
+PS: If you got the docker extension installed as well, you can get an overview of your running
+containers in the docker tab and just attach from there.
 
 Cheerio

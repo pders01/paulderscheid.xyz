@@ -8,10 +8,12 @@ snippet: "The hackfest this year was phenomenal!"
 
 This year's hackfest was awesome!
 
-I was staying at Toyoko Inn near Gare St. Charles which I would recommend. The rooms do give off a strong Japanese vibe. 🇯🇵
-It was a relatively good deal, everything was nice and tidy and the location was fine. It's a steep walk back if you're drunk, though.
+I was staying at Toyoko Inn near Gare St. Charles which I would recommend. The rooms do give off a
+strong Japanese vibe. 🇯🇵 It was a relatively good deal, everything was nice and tidy and the
+location was fine. It's a steep walk back if you're drunk, though.
 
-We had lots of great discussions about infrastructure, Koha's architecture and debated a lot of organizational things as well. For instance
+We had lots of great discussions about infrastructure, Koha's architecture and debated a lot of
+organizational things as well. For instance
 
 - Should we make Koha more modular by moving less core stuff into plugins?
 - How can we melt off the myriad of system preferences?
@@ -19,17 +21,23 @@ We had lots of great discussions about infrastructure, Koha's architecture and d
 
 ## Plugins as first-class citizens
 
-The idea is basically to move things that aren't universally useful into plugins. This however necessitates that plugins themselves become
-more flexible and can do a lot more. We currently are using hooks for basic to more involved things and that's also a solid path forward.
-I want those hooks to stay explicit and was against the idea of using `AUTOLOAD` and other perl magic to add that needed flexibility.
+The idea is basically to move things that aren't universally useful into plugins. This however
+necessitates that plugins themselves become more flexible and can do a lot more. We currently are
+using hooks for basic to more involved things and that's also a solid path forward. I want those
+hooks to stay explicit and was against the idea of using `AUTOLOAD` and other perl magic to add that
+needed flexibility.
 
-I would just repeat what domm has already written, so please just read this **[Explicit vs Implicit Hooks](https://domm.plix.at/perl/2024_04_explicit_implicit_hooks.html)**.
+I would just repeat what domm has already written, so please just read this
+**[Explicit vs Implicit Hooks](https://domm.plix.at/perl/2024_04_explicit_implicit_hooks.html)**.
 
 In essence: I think we just need more hooks!
 
-The other thing is the plugin store. This is something that already kind of exists within Koha, for info read the **[docs](https://koha-community.org/manual/latest/en/html/plugins.html#installing-a-plugin-repository)**.
-But now we want to take it a step further. We want an external (hopefully pretty) store where you can search for solutions that are more tailored
-to your use cases. We also want a rating and verification system that acts as a stamp of approval if something's deemed as a product of quality
+The other thing is the plugin store. This is something that already kind of exists within Koha, for
+info read the
+**[docs](https://koha-community.org/manual/latest/en/html/plugins.html#installing-a-plugin-repository)**.
+But now we want to take it a step further. We want an external (hopefully pretty) store where you
+can search for solutions that are more tailored to your use cases. We also want a rating and
+verification system that acts as a stamp of approval if something's deemed as a product of quality
 after community QA for example. I love this idea and will support it whenever I can.
 
 ## System Preferences
@@ -38,25 +46,30 @@ We have too many. 😃
 
 Some interesting ideas were floating around. For example
 
-1. Labeling a subset of system preferences that are deemed essential to configuring a production instance.
-2. Only conditionally show system preferences if their "parent"-preferences are enabled. Great idea, although this is already present in a way.
-   But this is a good time to start formalizing it.
+1. Labeling a subset of system preferences that are deemed essential to configuring a production
+   instance.
+2. Only conditionally show system preferences if their "parent"-preferences are enabled. Great idea,
+   although this is already present in a way. But this is a good time to start formalizing it.
 3. Also plugins need a good abstraction for integrating their sysprefs natively into Koha!
 
 This is still a work in progress but I like where it's going.
 
 ## Our way of working
 
-We had a long talk about improving the way we communicate. I'll spare you the details because you had to be there but we got a new shiny toy from
-this debate: **[Mattermost](https://chat.koha-community.org)**. If you're still on IRC please consider joining.
+We had a long talk about improving the way we communicate. I'll spare you the details because you
+had to be there but we got a new shiny toy from this debate:
+**[Mattermost](https://chat.koha-community.org)**. If you're still on IRC please consider joining.
 
-This tool has woken up a dormant dragon. Still, after a month, we have an influx of people and we also leverage the simplicity for stellar integrations
-with the community infrastructure. It also seems that we're finally able to connect the developers to the librarians. If you join, say hi **@paulderscheid**.
+This tool has woken up a dormant dragon. Still, after a month, we have an influx of people and we
+also leverage the simplicity for stellar integrations with the community infrastructure. It also
+seems that we're finally able to connect the developers to the librarians. If you join, say hi
+**@paulderscheid**.
 
 As they say: communication is key!
 
 ## Misc
 
-Of course visiting the pubs, bars, and restaurants in Marseille is always a pleasure. So many great conversations..
+Of course visiting the pubs, bars, and restaurants in Marseille is always a pleasure. So many great
+conversations..
 
 I'm really looking forward to seeing everyone next year again.
