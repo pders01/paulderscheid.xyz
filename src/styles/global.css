@@ -1,26 +1,19 @@
-@import 'tailwindcss';
-@import 'basecoat-css';
+@import "tailwindcss";
+@import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-:root {
-  --brand: #1565c0;
-  --brand-700: #0e4ea2;
-  --accent: #b92b27;
+@theme {
+    --color-brand: #1565c0;
+    --color-brand-700: #0e4ea2;
+    --color-accent: #b92b27;
 }
 
-.brand-gradient-text {
-  background: linear-gradient(to right, var(--accent), var(--brand));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+@theme {
+    --font-mono: "JetBrains Mono", monospace;
 }
 
-.btn-brand {
-  color: #fff;
-  background-image: linear-gradient(135deg, var(--accent), var(--brand));
-  border: 0;
-}
-.btn-brand:hover,
-.btn-brand:focus {
-  background-image: linear-gradient(135deg, var(--accent), var(--brand-700));
+@layer base {
+    body {
+        @apply bg-neutral-950 text-neutral-200 antialiased;
+    }
 }

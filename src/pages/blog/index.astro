@@ -1,28 +1,37 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Card from '../../components/Card.astro';
+import Layout from "../../layouts/Layout.astro";
 
-import { getCollection } from 'astro:content';
+import { getCollection } from "astro:content";
 
-const allBlogPosts = await getCollection('blog');
+const allBlogPosts = await getCollection("blog");
 
-allBlogPosts.sort(
-    (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
-);
+allBlogPosts.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
 ---
 
 <Layout title="Blog">
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="py-12 space-y-12">
         {
             allBlogPosts.map(({ data, collection, slug }) => (
-                <Card
-                    title={data.title}
-                    snippet={data.snippet}
-                    author={data.author}
-                    date={data.date}
-                    collection={collection}
-                    slug={slug}
-                />
+                <article class="group">
+                    <a href={`/${collection}/${slug}`} class="block space-y-2">
+                        <div class="flex items-baseline justify-between">
+                            <h2 class="text-xl font-bold text-neutral-200 group-hover:text-neutral-100 transition-colors">
+                                {data.title}
+                            </h2>
+                            <time
+                                datetime={data.date.toISOString()}
+                                class="text-xs text-neutral-500 font-mono shrink-0 ml-4"
+                            >
+                                {data.date.toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                })}
+                            </time>
+                        </div>
+                        <p class="text-sm text-neutral-400 line-clamp-2">{data.snippet}</p>
+                    </a>
+                </article>
             ))
         }
     </div>

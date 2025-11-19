@@ -1,0 +1,83 @@
+<script>
+    // Console Signature
+    console.log(
+        "%c Initializing void... \n%c Identity: jpahd \n%c Mode: 0xfun ",
+        "color: #a3a3a3; font-family: monospace; font-size: 12px;",
+        "color: #d4d4d4; font-family: monospace; font-size: 12px; font-weight: bold;",
+        "color: #ef4444; font-family: monospace; font-size: 12px; font-weight: bold;"
+    );
+
+    // Keyboard Sequence Trigger
+    const sequences = {
+        "0xfun": () => {
+            document.body.style.filter = "invert(1) hue-rotate(180deg)";
+            setTimeout(() => {
+                document.body.style.filter = "";
+            }, 200);
+        },
+        jpahd: () => {
+            const matrix = document.createElement("div");
+            matrix.style.position = "fixed";
+            matrix.style.inset = "0";
+            matrix.style.zIndex = "9999";
+            matrix.style.background = "black";
+            matrix.style.color = "#0f0";
+            matrix.style.fontFamily = "monospace";
+            matrix.style.fontSize = "20px";
+            matrix.style.overflow = "hidden";
+            matrix.style.pointerEvents = "none";
+            matrix.style.display = "flex";
+            matrix.style.alignItems = "center";
+            matrix.style.justifyContent = "center";
+            matrix.innerHTML = "ACCESS GRANTED";
+            document.body.appendChild(matrix);
+
+            setTimeout(() => {
+                matrix.remove();
+            }, 1000);
+        },
+    };
+
+    let buffer: string[] = [];
+    const konamiCode = [
+        "ArrowUp",
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowLeft",
+        "ArrowRight",
+        "b",
+        "a",
+    ];
+    const maxLen = 10; // Max length of our longest sequence (Konami)
+
+    document.addEventListener("keydown", (e) => {
+        buffer.push(e.key);
+        if (buffer.length > maxLen) {
+            buffer.shift();
+        }
+
+        // Check for string sequences (joined buffer)
+        const bufferStr = buffer.join("");
+        for (const [seq, action] of Object.entries(sequences)) {
+            if (bufferStr.endsWith(seq)) {
+                action();
+                buffer = []; // Reset buffer after match
+                return;
+            }
+        }
+
+        // Check for Konami Code (array comparison)
+        if (buffer.length === konamiCode.length && buffer.every((val, index) => val === konamiCode[index])) {
+            document.body.style.transition = "transform 1s ease-in-out";
+            document.body.style.transform = "rotate(360deg)";
+            setTimeout(() => {
+                document.body.style.transition = "";
+                document.body.style.transform = "";
+            }, 1000);
+            buffer = [];
+        }
+    });
+</script>
