@@ -32,8 +32,8 @@ function parseArgs(args) {
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--tags") {
             tags = args[++i]?.split(",") ?? null;
-        } else if (args[i] === "remove" && i === 0) {
-            action = "remove";
+        } else if ((args[i] === "remove" || args[i] === "list") && i === 0) {
+            action = args[i];
         } else if (!args[i].startsWith("--")) {
             positional.push(args[i]);
         }
@@ -102,12 +102,40 @@ function removeLinks(targets) {
     if (targets.length > 1) console.log(`\nDone: ${removed} removed`);
 }
 
+function listLinks() {
+    if (!existsSync(LINKS_DIR)) {
+        console.log("No links yet.");
+        process.exit(0);
+    }
+
+    const files = readdirSync(LINKS_DIR).filter((f) => f.endsWith(".mdx"));
+    if (files.length === 0) {
+        console.log("No links yet.");
+        process.exit(0);
+    }
+
+    for (const f of files) {
+        const content = readFileSync(join(LINKS_DIR, f), "utf8");
+        const url = content.match(/url: "(.+)"/)?.[1] ?? "";
+        const title = content.match(/title: "(.+)"/)?.[1] ?? f;
+        console.log(`${title}\n  ${url}\n`);
+    }
+
+    console.log(`${files.length} links`);
+}
+
 const { action, positional, tags } = parseArgs(process.argv.slice(2));
+
+if (action === "list") {
+    listLinks();
+    process.exit(0);
+}
 
 if (positional.length === 0) {
     console.error("Usage:");
-    console.error("  node scripts/add-link.mjs <url>... [--tags tag1,tag2]");
-    console.error("  node scripts/add-link.mjs remove <url-or-slug>...");
+    console.error("  pnpm bm <url>... [--tags tag1,tag2]");
+    console.error("  pnpm bm list");
+    console.error("  pnpm bm remove <url-or-slug>...");
     process.exit(1);
 }
 
