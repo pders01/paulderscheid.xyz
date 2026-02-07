@@ -4,6 +4,7 @@ import { writeFileSync, existsSync, mkdirSync, unlinkSync, readdirSync, readFile
 import { join } from "node:path";
 
 const LINKS_DIR = join(import.meta.dirname, "..", "src", "content", "links");
+const PERL_RESOURCES_FILE = join(import.meta.dirname, "..", "perl", "resources.json");
 
 function decodeEntities(text) {
     return text
@@ -28,17 +29,23 @@ function slugify(text) {
 function parseArgs(args) {
     const positional = [];
     let tags = null;
+    let note = null;
+    let section = "links";
     let action = "add";
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--tags") {
             tags = args[++i]?.split(",") ?? null;
-        } else if ((args[i] === "remove" || args[i] === "list") && i === 0) {
+        } else if (args[i] === "--note") {
+            note = args[++i] ?? null;
+        } else if (args[i] === "--perl") {
+            section = "perl";
+        } else if (args[i] === "remove" || args[i] === "list") {
             action = args[i];
         } else if (!args[i].startsWith("--")) {
             positional.push(args[i]);
         }
     }
-    return { action, positional, tags };
+    return { action, positional, tags, note, section };
 }
 
 async function fetchMeta(url) {
@@ -53,6 +60,15 @@ async function fetchMeta(url) {
         description: decodeEntities(descMatch?.[1]?.trim() || ""),
     };
 }
+
+async function fetchTitle(url) {
+    const { title } = await fetchMeta(url);
+    return title;
+}
+
+// ---------------------------------------------------------------------------
+// Links section
+// ---------------------------------------------------------------------------
 
 function toFrontmatter({ url, title, description, date, tags }) {
     const lines = [
@@ -79,7 +95,6 @@ function removeLinks(targets) {
     let removed = 0;
 
     for (const target of targets) {
-        // Match by URL or slug/filename
         const matched = files.filter((f) => {
             if (target.endsWith(".mdx") && f === target) return true;
             if (f === target + ".mdx") return true;
@@ -124,10 +139,114 @@ function listLinks() {
     console.log(`${files.length} links`);
 }
 
-const { action, positional, tags } = parseArgs(process.argv.slice(2));
+async function addLinks(urls, tags) {
+    mkdirSync(LINKS_DIR, { recursive: true });
+
+    const date = new Date().toISOString().slice(0, 10);
+    let ok = 0;
+    let fail = 0;
+
+    for (const url of urls) {
+        try {
+            const { title, description } = await fetchMeta(url);
+            const slug = slugify(title);
+            const filename = `${slug}.mdx`;
+            const filepath = join(LINKS_DIR, filename);
+
+            if (existsSync(filepath)) {
+                console.error(`[skip] ${url} — ${filename} already exists`);
+                fail++;
+                continue;
+            }
+
+            writeFileSync(filepath, toFrontmatter({ url, title, description, date, tags }));
+            console.log(`[ok]   ${url} → src/content/links/${filename}`);
+            console.log(`       title: ${title}`);
+            ok++;
+        } catch (e) {
+            console.error(`[err]  ${url} — ${e.message}`);
+            fail++;
+        }
+    }
+
+    if (urls.length > 1) {
+        console.log(`\nDone: ${ok} created, ${fail} failed`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Perl resources section
+// ---------------------------------------------------------------------------
+
+function loadPerlResources() {
+    if (!existsSync(PERL_RESOURCES_FILE)) return [];
+    return JSON.parse(readFileSync(PERL_RESOURCES_FILE, "utf8"));
+}
+
+function savePerlResources(resources) {
+    writeFileSync(PERL_RESOURCES_FILE, JSON.stringify(resources, null, 4) + "\n");
+}
+
+function listPerlResources() {
+    const resources = loadPerlResources();
+    if (resources.length === 0) {
+        console.log("No perl resources yet.");
+        process.exit(0);
+    }
+    for (const r of resources) {
+        console.log(`${r.title}\n  ${r.url}\n  ${r.note}\n`);
+    }
+    console.log(`${resources.length} resources`);
+}
+
+function removePerlResources(targets) {
+    const resources = loadPerlResources();
+    const remaining = resources.filter(
+        (r) => !targets.some((t) => r.url === t || r.title.toLowerCase().includes(t.toLowerCase())),
+    );
+    const removed = resources.length - remaining.length;
+    if (removed === 0) {
+        console.error("No matching resources found.");
+        return;
+    }
+    savePerlResources(remaining);
+    console.log(`Removed ${removed} resource(s).`);
+}
+
+async function addPerlResources(urls, note) {
+    const resources = loadPerlResources();
+    let ok = 0;
+
+    for (const url of urls) {
+        try {
+            if (resources.some((r) => r.url === url)) {
+                console.error(`[skip] ${url} — already exists`);
+                continue;
+            }
+            const title = await fetchTitle(url);
+            resources.push({ title, url, note: note ?? "" });
+            console.log(`[ok]   ${url}`);
+            console.log(`       title: ${title}`);
+            ok++;
+        } catch (e) {
+            console.error(`[err]  ${url} — ${e.message}`);
+        }
+    }
+
+    if (ok > 0) {
+        savePerlResources(resources);
+        console.log(`\nDone: ${ok} added (${resources.length} total)`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+const { action, positional, tags, note, section } = parseArgs(process.argv.slice(2));
 
 if (action === "list") {
-    listLinks();
+    section === "perl" ? listPerlResources() : listLinks();
     process.exit(0);
 }
 
@@ -136,43 +255,20 @@ if (positional.length === 0) {
     console.error("  pnpm bm <url>... [--tags tag1,tag2]");
     console.error("  pnpm bm list");
     console.error("  pnpm bm remove <url-or-slug>...");
+    console.error("");
+    console.error("  pnpm bm --perl <url>... [--note \"description\"]");
+    console.error("  pnpm bm --perl list");
+    console.error("  pnpm bm --perl remove <url-or-title>...");
     process.exit(1);
 }
 
 if (action === "remove") {
-    removeLinks(positional);
+    section === "perl" ? removePerlResources(positional) : removeLinks(positional);
     process.exit(0);
 }
 
-mkdirSync(LINKS_DIR, { recursive: true });
-
-const date = new Date().toISOString().slice(0, 10);
-let ok = 0;
-let fail = 0;
-
-for (const url of positional) {
-    try {
-        const { title, description } = await fetchMeta(url);
-        const slug = slugify(title);
-        const filename = `${slug}.mdx`;
-        const filepath = join(LINKS_DIR, filename);
-
-        if (existsSync(filepath)) {
-            console.error(`[skip] ${url} — ${filename} already exists`);
-            fail++;
-            continue;
-        }
-
-        writeFileSync(filepath, toFrontmatter({ url, title, description, date, tags }));
-        console.log(`[ok]   ${url} → src/content/links/${filename}`);
-        console.log(`       title: ${title}`);
-        ok++;
-    } catch (e) {
-        console.error(`[err]  ${url} — ${e.message}`);
-        fail++;
-    }
-}
-
-if (positional.length > 1) {
-    console.log(`\nDone: ${ok} created, ${fail} failed`);
+if (section === "perl") {
+    await addPerlResources(positional, note);
+} else {
+    await addLinks(positional, tags);
 }

@@ -6,6 +6,7 @@ const blogCollection = defineCollection({
         snippet: z.string(),
         author: z.string(),
         date: z.coerce.date(),
+        draft: z.boolean().optional(),
         tags: z.array(z.string()).optional(),
         image: z.string().optional(),
     }),
@@ -21,7 +22,20 @@ const linksCollection = defineCollection({
     }),
 });
 
+const perlCollection = defineCollection({
+    schema: z.object({
+        title: z.string(),
+        snippet: z.string(),
+        author: z.string(),
+        date: z.coerce.date(),
+        draft: z.boolean().optional(),
+        tags: z.array(z.string()).optional(),
+        image: z.string().optional(),
+    }),
+});
+
 export const collections = {
     blog: blogCollection,
     links: linksCollection,
+    perl: perlCollection,
 };

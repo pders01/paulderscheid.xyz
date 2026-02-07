@@ -1,0 +1,74 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import fs from "node:fs";
+import path from "node:path";
+
+const allPerlPosts = (await getCollection("perl")).filter((p) => !p.data.draft);
+allPerlPosts.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+function formatDate(date: Date): string {
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+// Read snippets from perl/snippets/*.pl
+const snippetDir = path.join(process.cwd(), "perl", "snippets");
+const snippetFiles = fs.readdirSync(snippetDir).filter((f: string) => f.endsWith(".pl")).sort();
+const snippets = snippetFiles.map((f: string) => {
+    const content = fs.readFileSync(path.join(snippetDir, f), "utf8");
+    const title = content.match(/^# title: (.+)$/m)?.[1] ?? f;
+    const note = content.match(/^# note: (.+)$/m)?.[1] ?? "";
+    const code = content.replace(/^# (title|note): .+\n/gm, "").trim();
+    return { title, note, code };
+});
+
+// Read resources from perl/resources.json
+const resourcesFile = path.join(process.cwd(), "perl", "resources.json");
+const resources = JSON.parse(fs.readFileSync(resourcesFile, "utf8"));
+---
+
+<Layout title="Perl">
+    <h1>Perl</h1>
+
+    <p>There's not enough fresh Perl content on the web. This is my corner for it - snippets, resources, and longer posts about patterns I use and things I find interesting.</p>
+
+    {snippets.length > 0 && (
+        <>
+            <h2>Snippets</h2>
+            {snippets.map(({ title, code, note }) => (
+                <section>
+                    <h3>{title}</h3>
+                    <pre><code>{code}</code></pre>
+                    <p><small>{note}</small></p>
+                </section>
+            ))}
+        </>
+    )}
+
+    {allPerlPosts.length > 0 && (
+        <>
+            <h2>Posts</h2>
+            <ul>
+                {allPerlPosts.map(({ data, collection, slug }) => (
+                    <li>
+                        <a href={`/${collection}/${slug}`}>{data.title}</a>
+                        <small>({formatDate(data.date)})</small>
+                    </li>
+                ))}
+            </ul>
+        </>
+    )}
+
+    {resources.length > 0 && (
+        <>
+            <h2>Resources</h2>
+            <ul>
+                {resources.map(({ title, url, note }: { title: string; url: string; note: string }) => (
+                    <li>
+                        <a href={url}>{title}</a> &mdash; {note}
+                    </li>
+                ))}
+            </ul>
+        </>
+    )}
+</Layout>
