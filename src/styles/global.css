@@ -7,6 +7,17 @@
     --visited: hsl(260 40% 60%);
 }
 
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: hsl(0 0% 98%);
+        --fg: hsl(0 0% 10%);
+        --fg-dim: hsl(0 0% 45%);
+        --border: hsl(0 0% 80%);
+        --link: hsl(220 70% 50%);
+        --visited: hsl(260 40% 56%);
+    }
+}
+
 html {
     font-family: monospace;
     background: var(--bg);
