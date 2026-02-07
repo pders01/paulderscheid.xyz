@@ -1,19 +1,40 @@
-@import "tailwindcss";
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
-
-@theme {
-    --color-brand: #1565c0;
-    --color-brand-700: #0e4ea2;
-    --color-accent: #b92b27;
+html {
+    font-family: monospace;
+    background: #111;
+    color: #ccc;
+    height: 100%;
 }
 
-@theme {
-    --font-mono: "JetBrains Mono", monospace;
+a { color: #6f6; }
+a:visited { color: #696; }
+
+body {
+    max-width: 72ch;
+    margin: 0 auto;
+    padding: 1rem;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-@layer base {
-    body {
-        @apply bg-neutral-950 text-neutral-200 antialiased;
-    }
+main { flex: 1; }
+
+nav a { margin-right: 1ch; }
+
+pre {
+    overflow-x: auto;
 }
+
+img {
+    max-width: 100%;
+}
+
+footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #333;
+    font-size: small;
+    color: #666;
+}
+
+footer a { color: #666; }

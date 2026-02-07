@@ -1,10 +1,7 @@
 ---
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import GhostCursor from "../components/GhostCursor.astro";
-import EasterEggs from "../components/EasterEggs.astro";
 import "../styles/global.css";
-import "@fontsource/jetbrains-mono";
 
 export interface Props {
     title: string;
@@ -14,145 +11,22 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="bg-neutral-950 text-neutral-200 font-mono antialiased">
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="sitemap" href="/sitemap-index.xml" />
         <meta name="generator" content={Astro.generator} />
-        <meta
-            name="description"
-            content="Explore the world of technology and personal development through my dev-blog and portfolio site.
-               Stay up-to-date with my latest projects, thoughts, and experiences in coding, design, and self-improvement."
-        />
+        <meta name="description" content="Paul Derscheid — Software Engineer, Koha contributor." />
         <title>{title}</title>
     </head>
-    <body class="min-h-screen flex flex-col relative">
-        <GhostCursor />
-        <div class="fixed inset-0 pointer-events-none opacity-20 bg-[url('/noise.webp')] z-50 mix-blend-overlay"></div>
-        <canvas id="constellation" class="fixed inset-0 z-0 opacity-40"></canvas>
-
+    <body>
         <Nav />
-        <main class="container mx-auto px-4 flex-1 max-w-3xl relative z-10">
+        <hr />
+        <main>
             <slot />
         </main>
         <Footer />
-
-        <script>
-            const canvas = document.getElementById("constellation") as HTMLCanvasElement;
-            const ctx = canvas.getContext("2d");
-
-            if (ctx) {
-                let width = window.innerWidth;
-                let height = window.innerHeight;
-                let isMouseDown = false;
-                let mouseX = 0;
-                let mouseY = 0;
-
-                canvas.width = width;
-                canvas.height = height;
-
-                const particles: { x: number; y: number; vx: number; vy: number }[] = [];
-                const particleCount = 50; // Low count for performance
-
-                for (let i = 0; i < particleCount; i++) {
-                    particles.push({
-                        x: Math.random() * width,
-                        y: Math.random() * height,
-                        vx: (Math.random() - 0.5) * 0.5,
-                        vy: (Math.random() - 0.5) * 0.5,
-                    });
-                }
-
-                function animate() {
-                    if (!ctx) return;
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.fillStyle = "#999";
-                    ctx.strokeStyle = "#666";
-
-                    particles.forEach((p, i) => {
-                        // Black Hole Effect
-                        if (isMouseDown) {
-                            const dx = mouseX - p.x;
-                            const dy = mouseY - p.y;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-                            const force = Math.min(1000 / (dist * dist + 1), 0.5); // Limit force
-
-                            p.vx += dx * force * 0.01;
-                            p.vy += dy * force * 0.01;
-                        }
-
-                        p.x += p.vx;
-                        p.y += p.vy;
-
-                        // Friction
-                        p.vx *= 0.99;
-                        p.vy *= 0.99;
-
-                        if (p.x < 0) p.x = width;
-                        if (p.x > width) p.x = 0;
-                        if (p.y < 0) p.y = height;
-                        if (p.y > height) p.y = 0;
-
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Connect to nearby particles
-                        for (let j = i + 1; j < particles.length; j++) {
-                            const p2 = particles[j];
-                            const dx = p.x - p2.x;
-                            const dy = p.y - p2.y;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-
-                            if (dist < 100) {
-                                ctx.beginPath();
-                                ctx.moveTo(p.x, p.y);
-                                ctx.lineTo(p2.x, p2.y);
-                                ctx.stroke();
-                            }
-                        }
-                    });
-
-                    requestAnimationFrame(animate);
-                }
-
-                animate();
-
-                window.addEventListener("resize", () => {
-                    width = window.innerWidth;
-                    height = window.innerHeight;
-                    canvas.width = width;
-                    canvas.height = height;
-                });
-
-                window.addEventListener("mousedown", () => (isMouseDown = true));
-                window.addEventListener("mouseup", () => (isMouseDown = false));
-                window.addEventListener("mousemove", (e) => {
-                    mouseX = e.clientX;
-                    mouseY = e.clientY;
-                });
-            }
-        </script>
-        <EasterEggs />
     </body>
 </html>
-
-<style is:global>
-    /* Global scrollbar styling for that terminal feel */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #0a0a0a;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-</style>

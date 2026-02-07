@@ -1,38 +1,24 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-
 import { getCollection } from "astro:content";
 
 const allBlogPosts = await getCollection("blog");
-
 allBlogPosts.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+function formatDate(date: Date): string {
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
 ---
 
 <Layout title="Blog">
-    <div class="py-12 space-y-12">
-        {
-            allBlogPosts.map(({ data, collection, slug }) => (
-                <article class="group">
-                    <a href={`/${collection}/${slug}`} class="block space-y-2">
-                        <div class="flex items-baseline justify-between">
-                            <h2 class="text-xl font-bold text-neutral-200 group-hover:text-neutral-100 transition-colors">
-                                {data.title}
-                            </h2>
-                            <time
-                                datetime={data.date.toISOString()}
-                                class="text-xs text-neutral-500 font-mono shrink-0 ml-4"
-                            >
-                                {data.date.toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                })}
-                            </time>
-                        </div>
-                        <p class="text-sm text-neutral-400 line-clamp-2">{data.snippet}</p>
-                    </a>
-                </article>
-            ))
-        }
-    </div>
+    <h1>Blog</h1>
+
+    <ul>
+        {allBlogPosts.map(({ data, collection, slug }) => (
+            <li>
+                <a href={`/${collection}/${slug}`}>{data.title}</a>
+                <small>({formatDate(data.date)})</small>
+            </li>
+        ))}
+    </ul>
 </Layout>

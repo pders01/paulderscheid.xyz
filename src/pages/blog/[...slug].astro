@@ -1,6 +1,5 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
@@ -14,26 +13,21 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { title, date } = entry.data;
+const { title, date, author } = entry.data;
 const { Content } = await entry.render();
+
+function formatDate(d: Date): string {
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
 ---
 
 <Layout title={title}>
-    <article
-        class="prose prose-invert max-w-3xl mx-auto prose-p:text-neutral-300 prose-headings:text-neutral-200 prose-a:text-neutral-200 hover:prose-a:text-neutral-100 prose-strong:text-neutral-200 prose-code:text-neutral-300 prose-li:text-neutral-300 prose-ul:text-neutral-300 prose-ol:text-neutral-300"
-    >
-        <div class="mb-8">
-            <h1 class="mb-2">{title}</h1>
-            <p class="text-sm text-neutral-400 font-mono">
-                {
-                    date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                    })
-                }
-            </p>
-        </div>
+    <article>
+        <h1>{title}</h1>
+        <p><small>{author} &mdash; {formatDate(date)}</small></p>
+        <hr />
         <Content />
+        <hr />
+        <p><a href="/blog">&larr; back</a></p>
     </article>
 </Layout>

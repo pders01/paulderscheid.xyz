@@ -1,7 +1,9 @@
-<footer class="container mx-auto p-8 relative z-10">
-    <div class="flex items-center justify-center gap-6 text-xs text-neutral-500">
-        <a class="hover:text-neutral-300 transition-colors" href="/legal">/legal</a>
-        <a class="hover:text-neutral-300 transition-colors" href="/privacy-policy">/privacy</a>
-        <span>© {new Date().getFullYear()}</span>
-    </div>
+---
+const year = new Date().getFullYear();
+---
+
+<footer>
+    <a href="/legal">/impressum</a> |
+    <a href="/privacy-policy">/datenschutz</a> |
+    &copy; {year}
 </footer>
