@@ -3,8 +3,8 @@ import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
-    const allBlogPosts = await getCollection("blog");
-    return allBlogPosts.map((entry) => {
+    const allPerlPosts = (await getCollection("perl")).filter((p) => !p.data.draft);
+    return allPerlPosts.map((entry) => {
         return {
             params: { slug: entry.slug },
             props: { entry },
@@ -28,6 +28,6 @@ function formatDate(d: Date): string {
         <hr />
         <Content />
         <p style="text-align:center">&middot;</p>
-        <p><a href="/blog">&lt; back</a></p>
+        <p><a href="/perl">&lt; back</a></p>
     </article>
 </Layout>

@@ -44,8 +44,7 @@ body {
 
 main {
     flex: 1;
-    margin: 0 auto;
-    /* Not sure yet about whether I prefer this or same layout everywhere */
+    max-width: inherit;
 }
 
 pre {
