@@ -25,9 +25,7 @@ async function fetchMeta(url) {
     const html = await res.text();
 
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const descMatch = html.match(
-        /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i,
-    );
+    const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
 
     return {
         title: titleMatch?.[1]?.trim() || new URL(url).hostname,
