@@ -3,11 +3,22 @@ import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import "../styles/global.css";
 
-export interface Props {
+interface Props {
     title: string;
+    narrow?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, narrow } = Astro.props;
+
+const home = '~/paulderscheid.xyz';
+const navLinks = [
+    { href: '/about', text: '/about' },
+    { href: '/blog', text: '/blog' },
+    { href: 'mailto:me@paulderscheid.xyz', text: '/mail' },
+];
+
+const gap = 1; // CSS: nav a { margin-right: 1ch }
+const navWidth = home.length + navLinks.reduce((acc, l) => acc + gap + l.text.length, 0) + gap;
 ---
 
 <!doctype html>
@@ -21,7 +32,8 @@ const { title } = Astro.props;
         <title>{title}</title>
     </head>
     <body>
-        <Nav />
+        {narrow && <Fragment set:html={`<style>:root{--content-width:${navWidth}ch}</style>`} />}
+        <Nav home={home} links={navLinks} />
         <hr />
         <main>
             <slot />

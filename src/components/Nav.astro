@@ -1,10 +1,10 @@
 ---
+interface Props {
+    home: string;
+    links: { href: string; text: string }[];
+}
 
+const { home, links } = Astro.props;
 ---
 
-<nav>
-    <a href="/">~/paulderscheid.xyz</a>
-    <a href="/about">/about</a>
-    <a href="/blog">/blog</a>
-    <a href="mailto:me@paulderscheid.xyz">/mail</a>
-</nav>
+<nav><a href="/">{home}</a>{links.map((l) => <a href={l.href}>{l.text}</a>)}</nav>
