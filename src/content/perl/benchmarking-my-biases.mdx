@@ -1,0 +1,550 @@
+---
+title: "Benchmarking my biases"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: true
+snippet: "I tried to break my own preferred Perl patterns. Some survived."
+tags: ["benchmarks", "patterns"]
+---
+
+I have opinions about how Perl should be written. Hashrefs over bare hashes. `map`/`grep` over loops. Preventive checks over exceptions. Dispatch tables over if/else chains. `join` over concatenation. Hash slice destructuring for named parameters.
+
+I also had benchmarks that proved all of this. The problem: I wrote them to confirm what I already believed. Every test was designed for my preferred pattern to win. That's not benchmarking, that's theater.
+
+So I tried the opposite. I wrote adversarial benchmarks — scenarios designed to make my patterns *lose*. If they survive, the conclusion is earned. If they don't, I learn where the line actually is.
+
+## Setup
+
+Perl v5.40.0 on an M3 MacBook Pro. Core `Benchmark` module, `cmpthese(-3, ...)` for 3 CPU seconds per comparison. Single machine, no statistical rigor beyond what `Benchmark` gives you. Take the absolute numbers with salt; the relative differences are what matter.
+
+## 1. Hashrefs vs bare hashes
+
+I always use hashrefs. `$site = {}`, never `%site`. It's a style rule I don't question. Let's question it.
+
+### Tiny hash, 2-key access (favorable to bare)
+
+```perl
+cmpthese(-3, {
+    'bare_hash' => sub {
+        my %h = ('name' => 'Paul', 'lang' => 'Perl');
+        my $x = $h{'name'};
+        my $y = $h{'lang'};
+    },
+    'hashref' => sub {
+        my $h = {'name' => 'Paul', 'lang' => 'Perl'};
+        my $x = $h->{'name'};
+        my $y = $h->{'lang'};
+    },
+});
+```
+
+```
+               Rate   hashref bare_hash
+hashref   4506685/s        --      -13%
+bare_hash 5160959/s       15%        --
+```
+
+Bare hash wins by 15%. The dereference arrow costs real time when the hash is small and local.
+
+### Slice extraction
+
+```perl
+cmpthese(-3, {
+    'bare_slice' => sub {
+        my %h = ('a' => 1, 'b' => 2, 'c' => 3, 'd' => 4);
+        my @vals = @h{'a', 'b', 'c', 'd'};
+    },
+    'hashref_slice' => sub {
+        my $h = {'a' => 1, 'b' => 2, 'c' => 3, 'd' => 4};
+        my @vals = @{$h}{'a', 'b', 'c', 'd'};
+    },
+});
+```
+
+```
+                   Rate hashref_slice    bare_slice
+hashref_slice 3315326/s            --           -9%
+bare_slice    3632347/s           10%            --
+```
+
+Same story. `@h{'a','b','c','d'}` beats `@{$h}{'a','b','c','d'}` by 10%.
+
+### Passing to a subroutine (where refs should shine)
+
+```perl
+sub _takes_hash (%h) { return $h{'name'} }
+sub _takes_ref  ($h) { return $h->{'name'} }
+
+cmpthese(-3, {
+    'pass_hash' => sub {
+        my %h = ('name' => 'Paul', 'lang' => 'Perl');
+        _takes_hash(%h);
+    },
+    'pass_ref' => sub {
+        my $h = {'name' => 'Paul', 'lang' => 'Perl'};
+        _takes_ref($h);
+    },
+});
+```
+
+```
+               Rate pass_hash  pass_ref
+pass_hash 2904077/s        --      -35%
+pass_ref  4492558/s       55%        --
+```
+
+Hashref wins by 55%. No flattening, no rebuilding — a single scalar on the stack.
+
+**Verdict:** Hashrefs lose small-scale local access but win the case that matters architecturally. You create a small hash once; you pass it around many times. The style rule survives, but it has a real cost at micro scale that I hadn't acknowledged.
+
+## 2. map and grep vs loops
+
+I reach for `map` and `grep` by default. The adversarial case: void context, where `map` builds a list nobody uses.
+
+### Void context (side effects only)
+
+```perl
+my @source_100 = (1..100);
+
+cmpthese(-3, {
+    'map_void' => sub {
+        my $sink;
+        map { $sink = $_ * 2 } @source_100;
+    },
+    'foreach_void' => sub {
+        my $sink;
+        foreach my $x (@source_100) { $sink = $x * 2 }
+    },
+    'for_void' => sub {
+        my $sink;
+        for my $i (0..$#source_100) { $sink = $source_100[$i] * 2 }
+    },
+});
+```
+
+```
+                 Rate     for_void foreach_void     map_void
+for_void     422204/s           --         -12%         -23%
+foreach_void 480790/s          14%           --         -13%
+map_void     551441/s          31%          15%           --
+```
+
+`map` wins. Even in void context. Building a throwaway list is apparently cheaper than the loop overhead at this scale. I didn't expect this.
+
+### Filtering with low hit rate (1%)
+
+```perl
+my @source_10k = (1..10_000);
+
+cmpthese(-3, {
+    'grep_filter' => sub {
+        my @out = grep { $_ % 100 == 0 } @source_10k;
+    },
+    'foreach_filter' => sub {
+        my @out;
+        foreach my $x (@source_10k) {
+            push @out, $x if $x % 100 == 0;
+        }
+    },
+});
+```
+
+```
+                 Rate foreach_filter    grep_filter
+foreach_filter 3477/s             --           -16%
+grep_filter    4146/s            19%             --
+```
+
+`grep` wins by 19%, even when almost nothing passes the filter.
+
+### Building a new list
+
+```perl
+cmpthese(-3, {
+    'map_transform' => sub {
+        my @out = map { $_ * 2 } @source_100;
+    },
+    'foreach_push' => sub {
+        my @out;
+        foreach my $x (@source_100) { push @out, $x * 2 }
+    },
+});
+```
+
+```
+                  Rate  foreach_push map_transform
+foreach_push  294168/s            --           -1%
+map_transform 297036/s            1%            --
+```
+
+Dead heat. 1% is noise.
+
+**Verdict:** My preference is earned. `map` and `grep` are genuinely fast — the Perl internals optimize them well. The void context result is the surprising one. I went in expecting `foreach` to win that case and it didn't.
+
+## 3. Preventive checks vs exceptions
+
+I check before I leap. `if (defined $input)` over `eval { ... }`. The adversarial angle: what if errors are rare? Does the check waste time when nothing ever fails?
+
+### Happy path (0% errors)
+
+```perl
+my @inputs_ok = map { {'value' => $_} } 1..100;
+
+cmpthese(-3, {
+    'check_first' => sub {
+        foreach my $input (@inputs_ok) {
+            if (exists $input->{'value'}) {
+                my $x = $input->{'value'} + 1;
+            }
+        }
+    },
+    'eval_catch' => sub {
+        foreach my $input (@inputs_ok) {
+            eval {
+                my $x = $input->{'value'} + 1;
+            };
+        }
+    },
+});
+```
+
+```
+                Rate  eval_catch check_first
+eval_catch  180959/s          --         -3%
+check_first 186194/s          3%          --
+```
+
+Dead heat. When nothing throws, `eval` is nearly free.
+
+### 10% error rate
+
+```perl
+my @inputs_10pct = map { $_ % 10 == 0 ? undef : {'value' => $_} } 1..100;
+
+cmpthese(-3, {
+    'check_first' => sub {
+        foreach my $input (@inputs_10pct) {
+            if (defined $input && exists $input->{'value'}) {
+                my $x = $input->{'value'} + 1;
+            }
+        }
+    },
+    'eval_catch' => sub {
+        foreach my $input (@inputs_10pct) {
+            eval {
+                die "bad input" unless defined $input;
+                my $x = $input->{'value'} + 1;
+            };
+            if ($@) {
+                # handle error
+            }
+        }
+    },
+});
+```
+
+```
+                Rate  eval_catch check_first
+eval_catch  104260/s          --        -40%
+check_first 174877/s         68%          --
+```
+
+Check wins by 68%. Every `die` that fires costs real time.
+
+### 50% error rate
+
+```perl
+my @inputs_50pct = map { $_ % 2 == 0 ? undef : {'value' => $_} } 1..100;
+# Same structure as above, but half the inputs are undef.
+```
+
+```
+                Rate  eval_catch check_first
+eval_catch   56170/s          --        -77%
+check_first 240603/s        328%          --
+```
+
+328% faster. `eval_catch` falls off a cliff.
+
+**Verdict:** The interesting finding isn't that checks win — it's *when* they start winning. At 0% errors, there's no difference. The cost isn't the eval setup; it's the throw. Every `die` allocates, unwinds, and copies `$@`. Preventive checks scale flat; exceptions scale with the error rate. Check first when errors are expected. `eval` is fine for genuinely exceptional cases.
+
+## 4. Dispatch tables vs if/else
+
+Perl hackers love dispatch tables. A hash of subrefs feels elegant. But at small branch counts, the hash lookup plus subroutine call has overhead that a simple comparison doesn't.
+
+### 3 branches (favorable to if/else)
+
+```perl
+my %dispatch_3 = (
+    'a' => sub { 1 },
+    'b' => sub { 2 },
+    'c' => sub { 3 },
+);
+my @keys_3 = ('a', 'b', 'c');
+
+cmpthese(-3, {
+    'dispatch' => sub {
+        for my $k (@keys_3) {
+            my $r = $dispatch_3{$k}->();
+        }
+    },
+    'if_else' => sub {
+        for my $k (@keys_3) {
+            my $r;
+            if    ($k eq 'a') { $r = 1 }
+            elsif ($k eq 'b') { $r = 2 }
+            elsif ($k eq 'c') { $r = 3 }
+        }
+    },
+});
+```
+
+```
+              Rate dispatch  if_else
+dispatch 4295319/s       --     -11%
+if_else  4842002/s      13%       --
+```
+
+if/else wins by 13%. Three string comparisons are cheaper than a hash lookup plus a subroutine call.
+
+### 10 branches
+
+```perl
+my %dispatch_10 = map { ("action_$_" => sub { $_ }) } 1..10;
+my @keys_10 = map { "action_$_" } 1..10;
+
+cmpthese(-3, {
+    'dispatch' => sub {
+        for my $k (@keys_10) {
+            my $r = $dispatch_10{$k}->();
+        }
+    },
+    'if_else' => sub {
+        for my $k (@keys_10) {
+            my $r;
+            if    ($k eq 'action_1')  { $r = 1 }
+            elsif ($k eq 'action_2')  { $r = 2 }
+            # ... through action_10
+            elsif ($k eq 'action_10') { $r = 10 }
+        }
+    },
+});
+```
+
+```
+              Rate  if_else dispatch
+if_else   901562/s       --     -34%
+dispatch 1358996/s      51%       --
+```
+
+Dispatch wins by 51%. The crossover is somewhere between 3 and 10 branches.
+
+### 50 branches (favorable to dispatch)
+
+```perl
+my %dispatch_50 = map { ("action_$_" => sub { $_ }) } 1..50;
+my @keys_50 = map { "action_$_" } 1..50;
+
+cmpthese(-3, {
+    'dispatch' => sub {
+        for my $k (@keys_50) {
+            my $r = $dispatch_50{$k}->();
+        }
+    },
+    'if_else' => sub {
+        for my $k (@keys_50) {
+            my $r;
+            for my $i (1..50) {
+                if ($k eq "action_$i") { $r = $i; last }
+            }
+        }
+    },
+});
+```
+
+```
+             Rate  if_else dispatch
+if_else   16797/s       --     -94%
+dispatch 290468/s    1629%       --
+```
+
+1629%. O(1) lookup vs O(n) scan. At 50 branches this isn't even a contest.
+
+**Verdict:** Dispatch tables lose at 3 branches and win everywhere else. The hash lookup is O(1) but has a constant overhead: the lookup itself plus the subroutine call. Below ~5 branches, simple comparisons are cheaper. Above that, dispatch tables pull away fast. My preference holds for the cases where I actually use it — I'm not building dispatch tables for three options.
+
+## 5. String concatenation
+
+I reach for `join`. It reads well, handles separators, and feels right. But at small scale it has function call overhead that `.` doesn't.
+
+### 2 strings (favorable to dot)
+
+```perl
+my ($s1, $s2) = ('hello', 'world');
+
+cmpthese(-3, {
+    'dot'         => sub { my $r = $s1 . ' ' . $s2 },
+    'dot_eq'      => sub { my $r = $s1; $r .= ' '; $r .= $s2 },
+    'join'        => sub { my $r = join(' ', $s1, $s2) },
+    'interpolate' => sub { my $r = "$s1 $s2" },
+});
+```
+
+```
+                  Rate        join      dot_eq         dot interpolate
+join        15434643/s          --        -27%        -55%        -56%
+dot_eq      21044689/s         36%          --        -39%        -40%
+dot         34571021/s        124%         64%          --         -2%
+interpolate 35245577/s        128%         67%          2%          --
+```
+
+Interpolation and dot are neck and neck at the top. `join` is dead last — 56% slower. At two strings, the function call overhead dominates.
+
+### 20 strings
+
+```perl
+my @strings_20 = map { "str_$_" } 1..20;
+
+cmpthese(-3, {
+    'dot_eq'  => sub { my $r = ''; $r .= $_ for @strings_20 },
+    'join'    => sub { my $r = join('', @strings_20) },
+    'sprintf' => sub { my $r = sprintf('%s' x 20, @strings_20) },
+});
+```
+
+```
+             Rate  dot_eq sprintf    join
+dot_eq  2017000/s      --    -29%    -58%
+sprintf 2852763/s     41%      --    -40%
+join    4782883/s    137%     68%      --
+```
+
+`join` crushes everything. 137% faster than `.=` in a loop.
+
+### 100 strings
+
+```perl
+my @strings_100 = map { "str_$_" } 1..100;
+
+cmpthese(-3, {
+    'dot_eq'  => sub { my $r = ''; $r .= $_ for @strings_100 },
+    'join'    => sub { my $r = join('', @strings_100) },
+    'sprintf' => sub { my $r = sprintf('%s' x 100, @strings_100) },
+});
+```
+
+```
+             Rate  dot_eq sprintf    join
+dot_eq   444014/s      --    -34%    -65%
+sprintf  673459/s     52%      --    -47%
+join    1267231/s    185%     88%      --
+```
+
+`join` dominates harder as the count grows. 185% faster than `.=`.
+
+**Verdict:** `join` loses at 2 strings and wins everything above that. The pattern is the same as dispatch tables: there's a constant overhead (function call) that pays for itself quickly. For two strings, just interpolate. For anything more, `join` is the right call. My preference holds with a small carve-out.
+
+## 6. Subroutine signatures
+
+This is the one I knew would hurt. I like hash slice destructuring for named parameters:
+
+```perl
+sub process ($h) {
+    my ($name, $age) = @{$h}{'name', 'age'};
+    # ...
+}
+```
+
+It's readable. It documents intent. It's also the slowest calling convention in Perl.
+
+### 2 arguments
+
+```perl
+sub _sig_2 ($a, $b)           { $a + $b }
+sub _trad_2                    { my ($a, $b) = @_; $a + $b }
+sub _shift_2                   { my $a = shift; my $b = shift; $a + $b }
+sub _hashref_2 ($h)            { $h->{'a'} + $h->{'b'} }
+sub _hash_slice_2 ($h)         { my ($a, $b) = @{$h}{'a', 'b'}; $a + $b }
+
+cmpthese(-3, {
+    'signature'   => sub { _sig_2(1, 2) },
+    'traditional' => sub { _trad_2(1, 2) },
+    'shift'       => sub { _shift_2(1, 2) },
+    'hashref'     => sub { _hashref_2({'a' => 1, 'b' => 2}) },
+    'hash_slice'  => sub { _hash_slice_2({'a' => 1, 'b' => 2}) },
+});
+```
+
+```
+                  Rate hash_slice     hashref       shift  signature traditional
+hash_slice   4398542/s         --        -20%        -67%       -68%        -68%
+hashref      5487602/s        25%          --        -59%       -60%        -60%
+shift       13455618/s       206%        145%          --        -1%         -2%
+signature   13601980/s       209%        148%          1%         --         -1%
+traditional 13771414/s       213%        151%          2%         1%          --
+```
+
+Traditional, signatures, and shift are in a dead heat at ~13.5M ops/sec. Hash slice is 68% slower. The cost isn't the slice itself — it's constructing the hashref at every call site.
+
+### 5 arguments
+
+```perl
+sub _sig_5 ($a, $b, $c, $d, $e) { $a + $b + $c + $d + $e }
+sub _trad_5 { my ($a, $b, $c, $d, $e) = @_; $a + $b + $c + $d + $e }
+sub _hashref_5 ($h) {
+    $h->{'a'} + $h->{'b'} + $h->{'c'} + $h->{'d'} + $h->{'e'}
+}
+sub _hash_slice_5 ($h) {
+    my ($a, $b, $c, $d, $e) = @{$h}{'a', 'b', 'c', 'd', 'e'};
+    $a + $b + $c + $d + $e;
+}
+
+cmpthese(-3, {
+    'signature'   => sub { _sig_5(1, 2, 3, 4, 5) },
+    'traditional' => sub { _trad_5(1, 2, 3, 4, 5) },
+    'hashref'     => sub { _hashref_5({'a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5}) },
+    'hash_slice'  => sub { _hash_slice_5({'a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 5}) },
+});
+```
+
+```
+                 Rate  hash_slice     hashref   signature traditional
+hash_slice  2605812/s          --        -13%        -60%        -68%
+hashref     2980749/s         14%          --        -54%        -64%
+signature   6460811/s        148%        117%          --        -21%
+traditional 8227628/s        216%        176%         27%          --
+```
+
+At 5 args, traditional pulls ahead of signatures by 27%. Hash slice stays at the bottom — 68% slower than traditional.
+
+### Named params at the call site (readability cost)
+
+```perl
+sub _named_hash (%h)       { $h{'x'} + $h{'y'} + $h{'z'} }
+sub _named_ref ($h)         { $h->{'x'} + $h->{'y'} + $h->{'z'} }
+sub _positional_3 ($x, $y, $z) { $x + $y + $z }
+
+cmpthese(-3, {
+    'positional' => sub { _positional_3(1, 2, 3) },
+    'named_hash' => sub { _named_hash('x' => 1, 'y' => 2, 'z' => 3) },
+    'named_ref'  => sub { _named_ref({'x' => 1, 'y' => 2, 'z' => 3}) },
+});
+```
+
+```
+                 Rate  named_ref named_hash positional
+named_ref   4398542/s         --       -14%       -58%
+named_hash  5122537/s        16%         --       -51%
+positional 10414909/s       137%       103%         --
+```
+
+Positional is 2.4x faster than named ref. The cost of readability is real.
+
+**Verdict:** This is the one where I lose and I know it. Hash slice destructuring costs 68% over positional args. Named parameters cost 2.4x over positional. I use them anyway because `process({'name' => 'Paul', 'age' => 30})` is self-documenting in a way that `process('Paul', 30)` never will be. In Koha, where I spend most of my Perl time, the codebase is large enough that readability at the call site matters more than nanoseconds. But I can't pretend there's no cost.
+
+## What I learned
+
+Four of my six preferences survived adversarial testing. One — dispatch tables — survived with a clear boundary (don't bother below ~5 branches). One — hash slice destructuring — lost outright on performance and I use it anyway.
+
+The bigger lesson: confirmation bias in benchmarking is easy. Every benchmark I'd written before this one was designed for my patterns to win. Testing the *other* direction found real nuance in every single case. Even the patterns that won had scenarios where they lost or tied.
+
+If you benchmark your own code, try to break your hypothesis. If it survives, you've earned the conclusion. If it doesn't, you've learned something better than being right.

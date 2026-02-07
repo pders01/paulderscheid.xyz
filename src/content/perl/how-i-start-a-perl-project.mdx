@@ -1,0 +1,187 @@
+---
+title: "How I start a Perl project in 2026"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: false
+snippet: "Carton, just, Perl::Critic at severity 1, perltidy, perlimports, CI. My starter repo and why each piece is there."
+tags: ["tooling", "workflow"]
+---
+
+Most Perl tutorials stop at `use strict; use warnings;` and leave the rest to you. Here's what I actually put in place before writing any code. Not the way — my way. I keep a [starter repo](https://github.com/pders01/perl-starter) that I clone for new projects.
+
+## The cpanfile
+
+```
+requires 'Perl::Critic';
+requires 'Perl::Critic::Policy::Subroutines::ProhibitCallsToUndeclaredSubs';
+requires 'Perl::Tidy';
+requires 'App::perlimports';
+requires 'Test::More';
+requires 'Test::Most';
+requires 'Devel::Cover';
+```
+
+Dev dependencies only — the project's own dependencies get added as you go. `Perl::Critic` and `Perl::Tidy` are non-negotiable. `App::perlimports` keeps your `use` statements honest. `Devel::Cover` because writing tests without knowing your coverage is guessing.
+
+## Carton
+
+```bash
+carton install
+carton exec -- prove -l t
+```
+
+Carton is Perl's answer to Bundler/npm. It reads the cpanfile, installs everything into `local/`, and gives you `carton exec` to run commands in that isolated environment. No polluting your system Perl, no version conflicts between projects.
+
+Some people use `cpanm` directly into system Perl. That works until you have two projects that need different versions of the same module. Carton costs you one extra word in front of your commands.
+
+## just
+
+Instead of a Makefile or shell scripts, I use [just](https://github.com/casey/just):
+
+```just
+perl_env := env_var_or_default("PERL_ENV", "carton")
+_carton := if perl_env == "system" { "" } else { "carton exec --" }
+
+install:
+    #!/usr/bin/env bash
+    if [ "{{perl_env}}" = "system" ]; then
+        cpanm --installdeps .
+    else
+        carton install
+    fi
+
+fmt:
+    find . -type f \( -name "*.p[lm]" -o -name "*.t" \) \
+        -not -path "./local/*" | xargs -n1 perltidy -b -bext="/"
+
+lint:
+    find . -type f \( -name "*.p[lm]" -o -name "*.t" \) \
+        -not -path "./local/*" | xargs -n1 {{_carton}} perlcritic
+
+test:
+    {{_carton}} prove -l t
+
+test-coverage:
+    #!/usr/bin/env bash
+    {{_carton}} sh -c "PERL5OPT=-MDevel::Cover prove -l t && cover"
+
+check: fmt lint test
+
+watch:
+    find . -name "*.p[lm]" -o -name "*.t" | entr -c just test
+```
+
+`just fmt` formats everything. `just lint` runs Perl::Critic. `just test` runs the test suite. `just check` does all three. `just watch` reruns tests on file changes using `entr`.
+
+The `PERL_ENV` variable lets you switch between Carton and system Perl. Set `PERL_ENV=system` if you're in a container or don't want the isolation.
+
+## Perl::Critic at severity 1
+
+```ini
+severity = 1
+theme = pbp || core
+verbose = %f: [%p] %m at line %l, column %c.  %e.  (Severity: %s)
+```
+
+Severity 1 is the strictest level. Most people start at 3 or 4 and work their way down. I start at 1 and disable things I disagree with. It's easier to relax rules you know about than to discover rules you didn't know existed.
+
+The interesting overrides:
+
+```ini
+# Signatures look like prototypes to Perl::Critic
+[-Subroutines::ProhibitSubroutinePrototypes]
+
+# Enforce Readonly over constant
+[ValuesAndExpressions::ProhibitConstantPragma]
+
+# Max complexity per sub
+[Subroutines::ProhibitExcessComplexity]
+max_mccabe = 10
+
+# Tell Critic about modern OO keywords
+[Subroutines::ProhibitCallsToUndeclaredSubs]
+exempt_subs = Object::Pad::field Object::Pad::class Future::AsyncAwait::await ...
+```
+
+The `ProhibitSubroutinePrototypes` disable is necessary if you use subroutine signatures — Critic can't tell them apart from prototypes. `ProhibitConstantPragma` enforces `Readonly` over `use constant`, which avoids the gotcha where constants aren't interpolated in strings. The `exempt_subs` list grows as you adopt more modern Perl modules that export keywords.
+
+## perltidy
+
+```
+-l=125  # Max line width is 125 cols
+-i=4    # Indent level is 4 cols
+-ci=4   # Continuation indent is 4 cols
+-b      # Write the file inline
+-vt=2   # Maximal vertical tightness
+-pt=1   # Medium parenthesis tightness
+-bt=1   # Medium brace tightness
+-sbt=1  # Medium square bracket tightness
+-nsfs   # No space before semicolons
+-nolq   # Don't outdent long quoted strings
+```
+
+Based on PBP defaults with a wider line limit. 125 columns is GitHub's line break point — code that fits in a GitHub PR diff without horizontal scrolling.
+
+The tightness settings are a matter of taste. I like medium tightness everywhere — not so tight that things are hard to read, not so loose that simple expressions span multiple lines.
+
+The important thing isn't the specific settings. It's that the settings exist, in a file, committed to the repo. Nobody argues about formatting because perltidy is the authority.
+
+## perlimports
+
+```toml
+libs                = ["lib", "t/lib"]
+padding             = true
+preserve_duplicates = false
+preserve_unused     = false
+tidy_whitespace     = true
+```
+
+`App::perlimports` manages your `use` statements. It removes unused imports, adds missing ones, and tidies the import lists. `preserve_unused = false` is the important one — dead imports accumulate fast without it.
+
+## VS Code + PerlNavigator
+
+```json
+{
+    "perlnavigator.perlPath": "carton exec -- perl",
+    "perlnavigator.perlcriticEnabled": true,
+    "perlnavigator.perlcriticProfile": ".perlcriticrc",
+    "perlnavigator.perltidyProfile": ".perltidyrc",
+    "perlnavigator.perlimportsProfile": "perlimports.toml",
+    "perlnavigator.perlimportsLintEnabled": true,
+    "perlnavigator.perlimportsTidyEnabled": true,
+    "perlnavigator.includePaths": ["lib", "t", "local/lib/perl5"]
+}
+```
+
+[PerlNavigator](https://github.com/bscan/PerlNavigator) by bscan is the best Perl language server right now. It runs Perl::Critic and perltidy inline, understands Carton's `local/` directory, and provides go-to-definition that actually works. The config points it at all the project-local settings so what you see in your editor matches what CI will enforce.
+
+## CI
+
+```yaml
+steps:
+  - uses: shogo82148/actions-setup-perl@v1
+    with:
+      perl-version: '5.36'
+
+  - name: Install dependencies
+    run: |
+      cpanm -n Carton
+      carton install --deployment
+
+  - name: Run format check
+    run: carton exec -- just fmt
+
+  - name: Run linter
+    run: carton exec -- just lint
+
+  - name: Run tests
+    run: carton exec -- just test
+```
+
+GitHub Actions with `shogo82148/actions-setup-perl` for Perl installation, Carton for dependencies, and the same `just` commands you run locally. The CI runs `fmt`, `lint`, and `test` — the same `just check` sequence. If it passes on your machine, it passes in CI.
+
+## What's not here
+
+No Moo, Moose, or Object::Pad in the starter. They're project-specific — some things need OO, some don't. No web framework. No database layer. This is just the floor: formatting, linting, testing, dependency isolation, CI. Everything else is a decision for the actual project.
+
+The [starter repo](https://github.com/pders01/perl-starter) is on GitHub. Clone it, delete the template section from the README, and start writing code.

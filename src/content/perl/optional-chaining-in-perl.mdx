@@ -1,0 +1,143 @@
+---
+title: "Optional chaining in Perl: the state of things"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: false
+snippet: "What exists, what doesn't, and what's coming for safe nested access in Perl."
+tags: ["ecosystem", "optional-chaining"]
+---
+
+If you write Perl, you've written this:
+
+```perl
+my $val;
+if (   defined $data
+    && defined $data->{'deeply'}
+    && defined $data->{'deeply'}->{'nested'}
+    && defined $data->{'deeply'}->{'nested'}->[0]
+) {
+    $val = $data->{'deeply'}->{'nested'}->[0]->{'value'};
+}
+```
+
+And if you haven't written it, you've written the version without the checks and watched it die at runtime:
+
+```
+Can't use an undefined value as a HASH reference
+```
+
+JavaScript solved this years ago with `?.`. Kotlin, Swift, C#, TypeScript, PHP, Ruby — they all have some form of it. Perl doesn't. But the situation is more interesting than "we don't have it."
+
+## What's on CPAN
+
+There are several modules that tackle the traversal problem with a function call:
+
+### Data::Diver
+
+```perl
+use Data::Diver qw(Dive);
+
+my $val = Dive($data, qw(deeply nested 0 value));
+```
+
+`Dive` walks a nested structure and returns an empty list if the path doesn't exist. It distinguishes between "missing" (empty list) and "exists but undef" (returns `undef`) — a subtle detail most alternatives skip. It also handles mixed hash/array access automatically: string keys for hashes, numeric keys for arrays.
+
+Been on CPAN since 2003. Stable, minimal, does the job.
+
+### Data::Reach
+
+```perl
+use Data::Reach qw(reach);
+
+my $val = reach($data, 'deeply', 'nested', 0, 'value');
+```
+
+Similar to `Data::Diver` but also provides `each_path` for iterating over all paths in a nested structure. The traversal function works the same way — returns `undef` on missing paths, handles hashes and arrays.
+
+### Deep::Hash::Utils
+
+```perl
+use Deep::Hash::Utils qw(deepvalue);
+
+my $val = deepvalue($data, 'deeply', 'nested', 0, 'value');
+```
+
+Same idea again. Also provides `nest` for creating nested structures and `reach`/`slurp` for iterating over all leaf values.
+
+### Data::DRef
+
+```perl
+use Data::DRef qw(getData);
+
+my $val = getData($data, 'deeply.nested.0.value');
+```
+
+Dot-notation string paths. Convenient if you're coming from JavaScript or working with configs, but the string parsing adds overhead and you lose the ability to use keys containing dots.
+
+### The pattern
+
+All four modules solve the same problem the same way: a function that takes a root reference and a list of keys, walks the structure, and returns undef (or empty list) if anything is missing along the way. The API differences are minor.
+
+What none of them can do is *chain*.
+
+## Why a function isn't enough
+
+The function approach works for data structures. But Perl's `->` operator does more than hash and array access — it dispatches method calls. Consider:
+
+```perl
+my $val = $obj->load_config->{'database'}->{'primary'}->connect->ping;
+```
+
+If `load_config` returns undef, you're dead. If the `'primary'` key doesn't exist, you're dead. If `connect` fails and returns undef, you're dead.
+
+No CPAN module can fix this because the problem isn't traversal — it's that `->` is baked into the parser. You can't intercept it, override it, or make it conditional from userspace. You'd need something like:
+
+```perl
+my $val = maybe($obj)->load_config->{'database'}->{'primary'}->connect->ping->unfurl;
+```
+
+You can get close with `tie` and `overload`, but it's slow, fragile, and breaks the moment you mix method calls with hash access. The elegant solution needs to live in the language.
+
+## PPC 0021: the `?->` operator
+
+There's a formal proposal for Perl core: [PPC 0021](https://github.com/Perl/PPCs/blob/main/ppcs/ppc0021-optional-chaining-operator.md) by Breno G. de Oliveira. The syntax:
+
+```perl
+my $val = $data?->{deeply}?->{nested}?->[0]?->{value};
+
+my $val = $obj?->load_config?->{database}?->{primary}?->connect?->ping;
+```
+
+`?->` behaves exactly like `->` except when the left side is undefined — it short-circuits the entire chain to an empty list (which becomes `undef` in scalar context). No wrapper objects, no function calls, no performance penalty.
+
+It handles everything:
+
+```perl
+$href?->{key}           # hash access
+$aref?->[3]             # array access
+$obj?->method           # method call
+$coderef?->(@args)      # code dereference
+$aref?->@*              # array slice
+$aref?->$#*             # last index
+```
+
+The proposal has been in **Draft** status since a pre-RFC appeared in late 2021, formally entering the PPCs repository in 2022. The PSC has acknowledged it as ready to implement, but as of early 2026 nobody has finished the parser work. The proposal itself notes that this can't be cleanly emulated from CPAN — it needs parser support, which is exactly why it's been slow.
+
+## What to use today
+
+For **data structure traversal** — nested hashes and arrays — use `Data::Diver` or `Data::Reach`. They've been stable for years, the API is clean, and the problem is well-solved:
+
+```perl
+use Data::Diver qw(Dive);
+
+my $name = Dive($config, qw(database primary host)) // 'localhost';
+```
+
+For **method chains**, there's no good answer yet. Your options are:
+
+1. Nested `defined` checks (verbose, correct)
+2. Wrap everything in `eval` (hides real errors)
+3. Write your own Maybe wrapper (slow, fragile)
+4. Wait for `?->`
+
+I'm waiting for `?->`. In the meantime, `Dive` for data and `defined` checks for methods.

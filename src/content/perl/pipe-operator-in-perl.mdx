@@ -1,0 +1,157 @@
+---
+title: "A pipe operator for Perl: the missing piece"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: false
+snippet: "Every functional language has |>. Perl doesn't. Here's what exists, what I tried, and what it would take."
+tags: ["ecosystem", "pipe-operator"]
+---
+
+If you've used Elixir, F#, or even recent PHP, you know the pipe operator:
+
+```elixir
+"  hello  " |> String.trim() |> String.upcase()
+# "HELLO"
+```
+
+Left to right. Data flows through functions. Each step is readable in isolation. In Perl, the same thing reads inside-out:
+
+```perl
+my $result = uc(trim("  hello  "));
+```
+
+Or you break it across lines with temporary variables:
+
+```perl
+my $trimmed = trim("  hello  ");
+my $result  = uc($trimmed);
+```
+
+Neither is terrible. But once you have 4-5 transformations, the nesting becomes real:
+
+```perl
+my $result = format_output(
+    validate(
+        transform(
+            parse(
+                read_input($file)
+            )
+        )
+    )
+);
+```
+
+You read this from the inside out, bottom to top. The data flows right to left, but your eyes scan left to right. Every other language that adopted `|>` did it because this pattern is painful at scale.
+
+## The attempts
+
+### Sub::Pipe (2009)
+
+The oldest attempt. It overloads Perl's bitwise `|` operator via a blessed coderef:
+
+```perl
+use Sub::Pipe;
+
+print "dankogai" | joint { uc shift };  # DANKOGAI
+```
+
+`joint` blesses a coderef so that `|` dispatches to it. Clever, but limited — it only works with `joint`-wrapped functions, can't chain naturally, and hijacking `|` has obvious collision risks with actual bitwise operations.
+
+### Sub::Chain
+
+An OO approach — build a pipeline as an object, then execute:
+
+```perl
+use Sub::Chain;
+
+my $chain = Sub::Chain->new;
+$chain->append(\&wash, ['cold']);
+$chain->append(\&dry, [{tumble => 'low'}]);
+$chain->append(\&fold);
+
+my @clean = $chain->call(@clothes);
+```
+
+Explicit, flexible, supports extra arguments per step. But the syntax is verbose — you're building a data structure that represents a pipeline rather than just writing one.
+
+### Function::Composition
+
+Composes functions into a single coderef:
+
+```perl
+use Function::Composition;
+
+my $pipeline = compose(\&format, \&validate, \&parse);
+my $result = $pipeline->($input);
+```
+
+Clean for reusable pipelines, but the composition reads right to left (the last function listed runs first), which is the exact problem we're trying to solve.
+
+### My own attempt: Syntax::Operator::Pipe
+
+I wanted `|>` badly enough to try building it. The module has two modes.
+
+The one that works — a `pipe` keyword exported as a function:
+
+```perl
+use Syntax::Operator::Pipe;
+
+my $result = pipe "  hello  ", \&trim, \&uc;
+# "HELLO"
+
+my $result = pipe 5,
+    sub { $_[0] + 1 },
+    sub { $_[0] * 2 },
+    sub { $_[0] + 3 };
+# 15
+```
+
+Left to right, data flows through functions, each step is a coderef. It also resolves bare function names as strings:
+
+```perl
+sub inc ($n)    { $n + 1 }
+sub double ($n) { $n * 2 }
+
+my $result = pipe 5, \&inc, \&double;
+# 12
+```
+
+This works. It's pure Perl, requires 5.38+, and the implementation is about 60 lines. But `pipe $x, \&f, \&g` is not `$x |> f |> g`. The backslash-ampersand noise adds up. The comma-separated list doesn't read like a pipeline.
+
+The mode that doesn't work — true infix `|>` via `XS::Parse::Infix`:
+
+```perl
+# This is what I wanted:
+my $result = "  hello  " |> trim |> uc;
+```
+
+The XS stub is in the repo. It registers the operator but doesn't implement the parse tree manipulation. Getting this right requires C-level optree surgery through `PL_infix_plugin`, which landed experimentally in Perl 5.38. Paul Evans' `XS::Parse::Infix` module provides the framework, but actually building a working pipe operator on top of it is non-trivial — you need to handle precedence, short-circuiting, and argument passing at the parser level.
+
+## The state of Perl core
+
+Unlike optional chaining (which has [PPC 0021](https://github.com/Perl/PPCs/blob/main/ppcs/ppc0021-optional-chaining-operator.md)), there is **no formal PPC proposal for a pipe operator**. The infrastructure is there — `PL_infix_plugin` exists in Perl 5.38+ and `XS::Parse::Infix` provides the CPAN-side framework — but nobody has written the proposal yet.
+
+Meanwhile, PHP 8.5 shipped `|>` in 2025. JavaScript has a [Stage 2 TC39 proposal](https://github.com/tc39/proposal-pipeline-operator). Elixir, F#, OCaml, Elm, and Raku have had it for years. The pressure is real, but Perl moves at its own pace.
+
+## The gap
+
+The CPAN modules all solve the problem at the wrong level:
+
+- **Sub::Pipe** hijacks `|` — collision risk, only works with wrapped functions
+- **Sub::Chain** is an OO pipeline builder — too much ceremony for inline transforms
+- **Function::Composition** composes right to left — misses the point
+- **My module** exports a function — works but the syntax is noisy
+
+What Perl actually needs is a parser-level operator. Something like:
+
+```perl
+my $result = $data |> parse |> validate |> transform |> format;
+```
+
+Where each `|>` takes the left-hand value and passes it as the first argument to the right-hand function. No wrappers, no ceremony, no backslash-ampersand.
+
+The building blocks exist (`PL_infix_plugin`, `XS::Parse::Infix`). The demand exists (every attempt on CPAN, every Perl hacker who's written the nested-function version and winced). What's missing is the PPC proposal and the implementation work.
+
+If you're interested in writing that PPC, the [PPC process](https://github.com/Perl/PPCs) is open. PPC 0021 for optional chaining is a good template. The hardest design questions — Hack-style vs F#-style, precedence, interaction with method calls — are already answered by PHP and JavaScript's implementations.
+
+Until then, `pipe $x, \&f, \&g` works. It's just not pretty.

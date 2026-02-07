@@ -1,0 +1,230 @@
+---
+title: "Pattern matching in Perl: from smartmatch disaster to real solutions"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: false
+snippet: "Perl tried pattern matching in 5.10 and it went badly. The smartmatch operator is now a cautionary tale. Here's what CPAN built in the wreckage."
+tags: ["ecosystem", "pattern-matching"]
+---
+
+Perl has tried pattern matching twice. First with the smartmatch operator in 5.10 — a well-intentioned disaster. Then through CPAN, where the solutions range from crude to genuinely good.
+
+## The smartmatch disaster
+
+Perl 5.10 introduced `given`/`when` and the smartmatch operator `~~`. The idea was to make matching work like you'd expect:
+
+```perl
+use feature 'switch';
+
+given ($value) {
+    when (42)      { say "the answer" }
+    when (/^foo/)  { say "starts with foo" }
+    when (@array)  { say "in the array" }
+    when (%hash)   { say "a key in the hash" }
+}
+```
+
+The problem was that `~~` tried to be smart about what kind of comparison to do based on *both* operands. String vs number vs array vs hash vs regex vs object — the interaction matrix was enormous and impossible to hold in your head. From `perlop`:
+
+> The behaviour of a smart match depends on what type of thing its arguments are.
+
+What followed was a table with dozens of combinations and subtle rules. Nobody could predict what `$x ~~ $y` would actually do without consulting the table. Code that looked correct silently did the wrong comparison.
+
+It was deprecated in 5.38. It was scheduled for removal in 5.42. Then the removal was postponed — smartmatch is now a "negative feature," like `indirect` object syntax. It stays in old feature bundles for backwards compatibility, but new code shouldn't touch it.
+
+The failure wasn't in wanting pattern matching. It was in trying to make it implicit.
+
+## What's on CPAN
+
+### Switch::Plain (2012)
+
+The first post-smartmatch attempt. Lukas Mai built a keyword plugin that compiles directly to if/elsif chains:
+
+```perl
+use Switch::Plain;
+
+sswitch ($status) {
+    case 'active':   { handle_active()   }
+    case 'inactive': { handle_inactive() }
+    case 'pending':  { handle_pending()  }
+    default:         { handle_unknown()  }
+}
+
+nswitch ($code) {
+    case 200: { ok()        }
+    case 404: { not_found() }
+    case 500: { error()     }
+}
+```
+
+Two keywords: `sswitch` for string comparison (`eq`), `nswitch` for numeric (`==`). The programmer picks one. No guessing, no smartmatch table. Cases can have guards:
+
+```perl
+sswitch ($input) {
+    case 'admin' if $DEBUG: { debug_admin() }
+    default:                { normal_flow() }
+}
+```
+
+It works by plugging into `PL_keyword_plugin` and generating the equivalent if/elsif chain at compile time. The decompiled output is exactly what you'd write by hand. Downside: only equality tests. You can't match against a regex, a type, or a range within the switch itself.
+
+### match::simple (Toby Inkster, 2013)
+
+A different approach — fix smartmatch instead of replacing it. Toby Inkster extracted a "sane subset" where the right-hand side determines the comparison:
+
+```perl
+use match::simple qw(match);
+
+match($value, 'foo')        # string eq
+match($value, qr/^foo/)     # regex =~
+match($value, \&is_valid)   # call as predicate
+match($value, [1, 2, 3])    # any element matches
+match($value, undef)        # both undef
+```
+
+The rules are simpler than smartmatch because the left side doesn't matter — only the right side's type determines behavior. It also ships a `|M|` infix operator via `Sub::Infix` for inline use:
+
+```perl
+use match::simple;
+
+if ($value |M| [qr/^foo/, qr/^bar/]) {
+    say "matches foo or bar prefix";
+}
+```
+
+The `match::simple::sugar` module provides a `given`/`when` replacement:
+
+```perl
+use match::simple::sugar;
+
+for ($status) {
+    when 'active',            then { handle_active()   };
+    when 'pending', 'queued', then { handle_pending()  };
+    when qr/^err/,            then { handle_error()    };
+    ...; # default
+}
+```
+
+This uses a `for` loop as the topicalizer (setting `$_`) and `next` to short-circuit after a match. It's clever — no new keywords needed, just functions that cooperate with existing control flow. But `|M|` is slow (operator overloading overhead), and the `when`/`then` sugar relies on `for`/`next` in ways that feel like a workaround.
+
+The same distribution also includes `match::smart` — a full reimplementation of the smartmatch operator with stable, documented behavior that won't change between Perl releases. A compatibility shim for code that was already using `~~` and needed something predictable.
+
+### Sub::PatternMatching (Steffen Mueller, 2004)
+
+The oldest and most different. Inspired by Haskell and OCaml, this one does function-level dispatch based on argument patterns:
+
+```perl
+use Sub::PatternMatching;
+use Params::Validate qw(:all);
+
+*process = patternmatch(
+    [{ type => HASHREF  }] => sub { process_hash($_[0])  },
+    [{ type => ARRAYREF }] => sub { process_array($_[0]) },
+    [{ type => SCALAR   }] => sub { process_scalar($_[0]) },
+);
+
+process({ foo => 1 });  # calls process_hash
+process([1, 2, 3]);     # calls process_array
+process("hello");       # calls process_scalar
+```
+
+This is genuine pattern matching in the functional programming sense — dispatching on the shape of the arguments, not just equality of a value. The patterns use `Params::Validate` specifications, so you can match on type, isa, custom callbacks, anything.
+
+The problem is the syntax. Wrapping everything in arrayrefs and hashrefs, passing pairs of `[pattern] => sub { ... }` — it's powerful but reads like data structure manipulation, not pattern matching. It also predates modern Perl features by two decades. But the concept is right: this is closer to what Rust and Elixir actually do than any of the switch/case modules.
+
+### Syntax::Keyword::Match (Paul Evans, 2021)
+
+Paul Evans — Perl Steering Council member, author of `XS::Parse::Keyword`, `XS::Parse::Infix`, `Syntax::Keyword::Try`, and half the plumbing that makes modern Perl syntax extensions possible — built this as a proper match/case construct:
+
+```perl
+use Syntax::Keyword::Match;
+
+match ($status : eq) {
+    case('active')   { handle_active()   }
+    case('pending')  { handle_pending()  }
+    case('error')    { handle_error()    }
+    default          { handle_unknown()  }
+}
+```
+
+The key insight that smartmatch got wrong: **you must specify the comparison operator**. The `: eq` after the expression is explicit. No guessing, no interaction matrix. Four operators are supported:
+
+```perl
+match ($n : ==)  { ... }    # numeric
+match ($s : eq)  { ... }    # string
+match ($s : =~)  { ... }    # regex
+match ($obj : isa) { ... }  # type check
+```
+
+The `isa` operator is where it gets interesting — dispatch on object type:
+
+```perl
+match ($event : isa) {
+    case (ClickEvent)  { handle_click($event)  }
+    case (KeyEvent)    { handle_key($event)    }
+    case (TimerEvent)  { handle_timer($event)  }
+}
+```
+
+This is close to what you'd use pattern matching for in a state machine. Multiple cases can share a block, and `case if()` adds arbitrary guards:
+
+```perl
+match ($code : ==) {
+    case(200), case(201) { success()     }
+    case(301), case(302) { redirect()    }
+    case if($code < 500) { client_err()  }
+    default              { server_err()  }
+}
+```
+
+It compiles via XS at `use` time — no source filters, no runtime overhead for the dispatch structure itself. The experimental `dispatch` mode uses an optimized optree for constant cases. And because it yields a value from `do` blocks, you can use it as an expression:
+
+```perl
+my $label = do {
+    match ($status : eq) {
+        case('active')  { 'green' }
+        case('pending') { 'yellow' }
+        default         { 'grey' }
+    }
+};
+```
+
+It's still marked experimental, built on top of `XS::Parse::Keyword` which is also experimental. But it's the closest thing Perl has to a real, modern match/case.
+
+## What's missing
+
+Every module above solves the dispatch problem — testing a value against multiple possibilities. What none of them do is **destructuring**. In Rust:
+
+```rust
+match point {
+    Point { x: 0, y } => println!("on y-axis at {y}"),
+    Point { x, y: 0 } => println!("on x-axis at {x}"),
+    Point { x, y }     => println!("at ({x}, {y})"),
+}
+```
+
+The match arm simultaneously tests the shape *and* binds variables from within it. Elixir does the same:
+
+```elixir
+case response do
+  {:ok, body}    -> process(body)
+  {:error, code} -> handle_error(code)
+end
+```
+
+In Perl, you can match on a value, but extracting parts of it is a separate step. You match the type or string, then inside the block you manually pull out what you need. `Sub::PatternMatching` gets closest — it can match on argument types — but it can't bind destructured values from within the match itself.
+
+Exhaustiveness checking is also absent. Rust's compiler warns you if a `match` doesn't cover all variants of an enum. None of the Perl modules can do this, because Perl has no algebraic data types to check against. `Syntax::Keyword::Match` with `isa` could theoretically check coverage for a known class hierarchy, but it doesn't.
+
+These aren't criticisms of the modules — they're limitations of the language. Perl doesn't have algebraic types, sum types, or a static type system that could drive destructuring and exhaustiveness at compile time. The CPAN modules do what's possible within those constraints, and `Syntax::Keyword::Match` does it well.
+
+## Where things stand
+
+Smartmatch tried to be magic and became a cautionary tale. The CPAN response was better:
+
+- **Switch::Plain** trades flexibility for clarity — just equality, nothing more
+- **match::simple** rehabilitates the good parts of smartmatch with predictable rules
+- **Sub::PatternMatching** brings functional-style dispatch but with 2004 syntax
+- **Syntax::Keyword::Match** is the real deal — explicit operators, XS compilation, type dispatch, guards
+
+If you're writing Perl today and want match/case, `Syntax::Keyword::Match` is the answer. It's experimental, but it's built by someone who writes the infrastructure that experimental Perl features are built on. The explicit operator requirement is a feature, not a compromise — it's exactly what smartmatch should have done from the start.

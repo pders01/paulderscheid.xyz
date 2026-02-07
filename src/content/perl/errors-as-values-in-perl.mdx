@@ -1,0 +1,215 @@
+---
+title: "Errors as values in Perl: stop throwing, start returning"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: false
+snippet: "Perl adopted exception culture from Java. Go went the other way. CPAN has modules for both — including one the author publicly regrets."
+tags: ["ecosystem", "error-handling"]
+---
+
+Every Perl web framework teaches you to throw exceptions:
+
+```perl
+sub get_user ($id) {
+    my $user = $db->find($id)
+        or die MyApp::Exception::NotFound->new(
+            message => "User $id not found",
+            status  => 404,
+        );
+    return $user;
+}
+```
+
+Then somewhere else — maybe in middleware, maybe in a base controller, maybe in a `around` modifier — something catches it:
+
+```perl
+try {
+    my $user = get_user($id);
+    $c->render(json => $user);
+} catch ($e) {
+    if ($e->isa('MyApp::Exception::NotFound')) {
+        $c->render(json => { error => $e->message }, status => $e->status);
+    } elsif ($e->isa('MyApp::Exception::Forbidden')) {
+        # ...
+    } else {
+        # ...
+    }
+}
+```
+
+You're reading controller code, but the error handling logic lives in an exception class hierarchy somewhere else. To understand what happens on failure, you need to cross-reference at least two files. The exception class handles every case it might be thrown from, not just yours.
+
+Go took the opposite approach:
+
+```go
+user, err := getUser(id)
+if err != nil {
+    return c.JSON(404, map[string]string{"error": err.Error()})
+}
+```
+
+The error is a value. You handle it right there, in the same function, on the next line. No class hierarchy, no catch blocks, no cross-referencing. Yes, Go's `if err != nil` is infamous for its repetition. But the tradeoff — locality of error handling — is worth more than people give it credit for.
+
+Perl can do this naturally. Functions return lists. `($value, $error)` is just a two-element list. The question is whether anyone formalized it.
+
+## Three takes on the problem
+
+### Return::Value (2005, deprecated)
+
+The earliest serious attempt. Casey West built an object that could be true or false depending on success or failure:
+
+```perl
+use Return::Value;
+
+sub send_data ($net, $payload) {
+    if ($net->transport($payload)) {
+        return success;
+    } else {
+        return failure "Transport failed";
+    }
+}
+
+my $result = send_data($net, $payload);
+unless ($result) {
+    print $result;  # stringifies to error message
+}
+```
+
+The object overloads boolean, string, numeric, and dereference operators. A `failure` object is false in boolean context but carries data as an object.
+
+Ricardo Signes, who took over maintenance, deprecated it. The POD reads:
+
+> *Return::Value was a bad idea. I'm sorry that I had it, sorry that I followed through, and sorry that it got used in other useful libraries. [...] Objects that are false are just a dreadful idea in almost every circumstance, especially when the object has useful properties. Please do not use this library.*
+
+The problem: polymorphic return values break Perl's expectations. Code that checks `if ($result)` might be testing truthiness or checking for an object — and the two mean different things. Overloading made the simple case clever and the complex case confusing. It's a good lesson in fighting the language instead of working with it.
+
+### ReturnValue (brian d foy, 2013)
+
+An OO wrapper that avoids the polymorphism trap:
+
+```perl
+use ReturnValue;
+
+sub do_something {
+    return ReturnValue->error(
+        value       => 'not_found',
+        description => 'User not found',
+        tag         => 'not_found',
+    ) if $failed;
+
+    return ReturnValue->success(
+        value       => $user,
+        description => 'Found user',
+    );
+}
+
+my $result = do_something();
+if ($result->is_error) {
+    # handle based on $result->tag or $result->description
+}
+```
+
+No overloading tricks. Success and failure are distinct subclasses (`ReturnValue::Success`, `ReturnValue::Error`), checked via `is_error` / `is_success`. The `tag` field is useful for switching on error types.
+
+It works, but the ceremony adds up. Constructing a `ReturnValue` object for every return feels heavy compared to what Go does with a bare `error` interface. You also lose Perl's natural multi-return — everything goes through method calls on an object.
+
+### Result::Simple (kobaken, 2024)
+
+No wrapper objects. Just Perl's native list returns with `ok` and `err` helpers:
+
+```perl
+use Result::Simple qw(ok err);
+
+sub get_user ($id) {
+    my $user = $db->find($id);
+    return err({ message => "User $id not found", status => 404 })
+        unless $user;
+    return ok($user);
+}
+```
+
+`ok($v)` returns `($v, undef)`. `err($e)` returns `(undef, $e)`. That's it. In the controller:
+
+```perl
+my ($user, $err) = get_user($id);
+if ($err) {
+    $c->render(json => { error => $err->{'message'} }, status => $err->{'status'});
+    return;
+}
+$c->render(json => $user);
+```
+
+The error is handled on the spot. No exception class. No catch block. No cross-referencing. The module enforces list context — if you write `my $user = get_user($id)` and forget to capture the error, it croaks. That's the kind of guardrail that actually helps.
+
+It has more than just `ok` and `err`. `chain` threads results through functions:
+
+```perl
+my @r = ok($request);
+@r = chain(validate_name => @r);
+@r = chain(validate_age  => @r);
+return @r;
+```
+
+If any step fails, the rest are skipped and the error propagates. `pipeline` composes the same thing into a reusable function:
+
+```perl
+state $validate = pipeline qw(validate_name validate_age);
+my ($req, $err) = $validate->(ok($input));
+```
+
+`combine` collects multiple results (like `Promise.all`):
+
+```perl
+my ($data, $err) = combine(
+    fetch_user($id),
+    fetch_orders($id),
+    fetch_settings($id),
+);
+my ($user, $orders, $settings) = @$data unless $err;
+```
+
+And `combine_with_all_errors` does the same but collects *every* error instead of short-circuiting on the first — exactly what you want for form validation where you report all failures at once.
+
+Optional type assertions via `result_for` let you enforce return types in development:
+
+```perl
+use Types::Standard -types;
+
+result_for get_user => HashRef, HashRef;
+```
+
+This wraps the function and validates that success values match the first type and error values match the second. Disable it in production with `RESULT_SIMPLE_CHECK_ENABLED=0`.
+
+## Why this works in Perl
+
+The Go pattern maps to Perl more naturally than most languages. Python has to return tuples and destructure them awkwardly. JavaScript has no multi-return at all — you need wrapper objects or arrays. Perl has had `($val, $err) = func()` since Perl 5.0.
+
+What Result::Simple adds is discipline:
+
+- `ok` and `err` make intent explicit (vs. bare `return (undef, "something")` which could be a bug)
+- List context enforcement catches forgotten error handling at call sites
+- `chain` and `pipeline` give you the composition that makes Go programmers jealous
+- Type assertions catch contract violations in development without runtime cost in production
+
+The module doesn't fight Perl. It formalizes a pattern Perl already supports natively.
+
+## The gap
+
+Result::Simple exists and works. The gap isn't in tooling — it's in culture.
+
+Perl's ecosystem is built on exceptions. Mojo, Catalyst, Dancer, DBIx::Class — they all throw. `Try::Tiny` and `Syntax::Keyword::Try` are standard tools. The CPAN convention is `die` on failure, catch at a higher level.
+
+Switching to errors-as-values in application code means your functions return `($val, $err)` but every CPAN module you call still throws. You end up wrapping library calls:
+
+```perl
+sub safe_find ($db, $id) {
+    my $user = eval { $db->find($id) };
+    return err({ message => "$@", status => 500 }) if $@;
+    return err({ message => "Not found", status => 404 }) unless $user;
+    return ok($user);
+}
+```
+
+That's the boundary layer. Your code returns values, the outside world throws, and you translate at the edges. It's the same pattern Go uses with C libraries and panic recovery.
+
+Whether the Perl community ever shifts toward errors-as-values as a default is an open question. Return::Value proved that polymorphic objects are a dead end. Result::Simple works because `($val, $err)` is just a list — Perl already knows how to do that.

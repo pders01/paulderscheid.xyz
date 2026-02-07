@@ -1,0 +1,257 @@
+---
+title: "Async/await in Perl: the ecosystem nobody talks about"
+author: "Paul Derscheid"
+date: "07 Feb 2026"
+draft: false
+snippet: "Perl has real async/await. Not a hack, not a polyfill — XS-level suspend/resume that works with Mojolicious, IO::Async, and bare futures. Here's how."
+tags: ["ecosystem", "async"]
+---
+
+Perl has real `async`/`await`. Not a source filter, not a Coro hack, not a transpiler — XS-level keyword injection that suspends and resumes the Perl interpreter. It works today, with the event loops you're already using.
+
+## The pieces
+
+Perl's async story has three layers:
+
+1. **Future** — the promise primitive (Paul Evans, 2011)
+2. **An event loop** — IO::Async, Mojo::IOLoop, or AnyEvent
+3. **Future::AsyncAwait** — the `async`/`await` keywords (Paul Evans, 2016)
+
+Each layer is independent. You can use Future without async/await. You can use async/await with Mojo::Promise instead of Future. The layers compose.
+
+## Future — the promise
+
+A `Future` represents a value that doesn't exist yet:
+
+```perl
+use Future;
+
+my $f = Future->new;
+
+# somewhere later...
+$f->done("result");
+
+# or...
+$f->fail("something went wrong");
+```
+
+You chain operations with `then`:
+
+```perl
+$f->then(sub {
+    my ($result) = @_;
+    return Future->done(uc $result);
+})->then(sub {
+    my ($upper) = @_;
+    say $upper;
+});
+```
+
+This is JavaScript's `Promise.then()`. It has the same composition tools too — `Future->wait_all` (like `Promise.all`), `Future->wait_any` (like `Promise.race`), `Future->needs_all` (all must succeed), and `Future->needs_any` (at least one must succeed).
+
+Where it gets interesting is error handling. Futures use a convention for failure categories:
+
+```perl
+$f->fail("Connection refused", connect => $host, $port);
+$f->fail("404 Not Found", http => $response);
+$f->fail("No such host", resolve => $hostname);
+```
+
+The second argument is a short string categorizing the failure. You can catch specific categories:
+
+```perl
+$f->catch_with_f(
+    http    => sub { my ($f, $msg, @detail) = @_; ... },
+    connect => sub { my ($f, $msg, @detail) = @_; ... },
+);
+```
+
+This is more structured than JavaScript's generic `.catch()` but less formal than Rust's `Result<T, E>`. It's a convention, not a type system — but it's a convention that IO::Async and the entire Future ecosystem follows consistently.
+
+## The event loops
+
+Perl has three major event loops, and they all work with async/await:
+
+**IO::Async** (Paul Evans) — the "batteries included" framework. Built around `IO::Async::Loop`, which provides timers, I/O watching, process management, and a Future-native API:
+
+```perl
+use IO::Async::Loop;
+
+my $loop = IO::Async::Loop->new;
+
+my $future = $loop->resolver->getaddrinfo(
+    host    => "example.com",
+    service => "http",
+);
+
+my @addrs = $future->get;
+```
+
+**Mojo::IOLoop** (Mojolicious) — the event loop you know if you've used Mojolicious. Uses `Mojo::Promise` instead of `Future`, but since Mojo 8.28 it implements the `AWAIT_*` protocol that `Future::AsyncAwait` expects:
+
+```perl
+use Mojo::UserAgent;
+
+my $ua = Mojo::UserAgent->new;
+my $promise = $ua->get_p('https://example.com');
+
+$promise->then(sub {
+    my ($tx) = @_;
+    say $tx->result->body;
+})->wait;
+```
+
+**AnyEvent** (Marc Lehmann) — the lowest-level option. A thin abstraction over multiple event loops (EV, Event, POE, even IO::Async). No native Future support, but `Future::IO` can bridge it.
+
+The critical thing: `Future::AsyncAwait` doesn't care which loop you use. It operates at the keyword level, suspending and resuming Perl's interpreter state. Any object that implements the `AWAIT_*` protocol works — `Future`, `Mojo::Promise`, or your own class.
+
+## Future::AsyncAwait — the keywords
+
+`Future::AsyncAwait` adds two keywords to Perl: `async` and `await`. They do what you'd expect:
+
+```perl
+use Future::AsyncAwait;
+
+async sub fetch_and_process {
+    my ($url) = @_;
+
+    my $response = await http_get($url);
+    my $parsed   = await parse_body($response);
+
+    return $parsed;
+}
+```
+
+`async` marks a sub as asynchronous — its return value is automatically wrapped in a `Future`. `await` suspends the sub until the given future completes, then returns the result. If the future fails, the exception propagates.
+
+This is not sugar over `then` chains. When `await` hits a pending future, the entire Perl call stack for that sub is suspended at the XS level and stored. When the future resolves, the stack is restored and execution continues from exactly where it left off. Local variables, loop state, eval blocks — all preserved.
+
+### With Mojolicious
+
+If you're already using Mojo, this is what it looks like:
+
+```perl
+use Mojolicious::Lite -signatures;
+use Future::AsyncAwait;
+
+get '/compare' => async sub ($c) {
+    my $mojo = await $c->ua->get_p('https://mojolicious.org');
+    my $cpan = await $c->ua->get_p('https://metacpan.org');
+
+    $c->render(json => {
+        mojo => $mojo->result->code,
+        cpan => $cpan->result->code,
+    });
+};
+
+app->start;
+```
+
+Those two HTTP requests run sequentially — the second waits for the first. For concurrent requests, use `Mojo::Promise->all`:
+
+```perl
+get '/compare' => async sub ($c) {
+    my @results = await Mojo::Promise->all(
+        $c->ua->get_p('https://mojolicious.org'),
+        $c->ua->get_p('https://metacpan.org'),
+    );
+
+    $c->render(json => {
+        mojo => $results[0][0]->result->code,
+        cpan => $results[1][0]->result->code,
+    });
+};
+```
+
+### With IO::Async
+
+The same pattern with IO::Async looks like:
+
+```perl
+use Future::AsyncAwait;
+use IO::Async::Loop;
+use Net::Async::HTTP;
+
+my $loop = IO::Async::Loop->new;
+my $http = Net::Async::HTTP->new;
+$loop->add($http);
+
+async sub fetch {
+    my ($url) = @_;
+    my $response = await $http->GET($url);
+    return $response->content;
+}
+
+my $content = await fetch('https://example.com');
+```
+
+### Error handling
+
+`await` inside a `try`/`catch` works naturally with `Syntax::Keyword::Try`:
+
+```perl
+use Future::AsyncAwait;
+use Syntax::Keyword::Try;
+
+async sub safe_fetch {
+    my ($url) = @_;
+
+    try {
+        my $response = await http_get($url);
+        return $response;
+    } catch ($e) {
+        warn "Failed to fetch $url: $e";
+        return undef;
+    }
+}
+```
+
+Cross-module integration between `Future::AsyncAwait` and `Syntax::Keyword::Try` is tested — `return` inside `try` blocks within `async` subs works correctly, which is non-trivial given that both modules manipulate the Perl optree.
+
+### Cancellation
+
+Async subs support cancellation that propagates backwards:
+
+```perl
+async sub long_task {
+    CANCEL { warn "Task was cancelled" }
+
+    my $step1 = await do_step1();
+    my $step2 = await do_step2();
+    return combine($step1, $step2);
+}
+
+my $f = long_task();
+$f->cancel;  # cancels do_step1 or do_step2, whichever is pending
+```
+
+The `CANCEL` block runs when the outer future is cancelled while the async sub is suspended. Cancellation propagates into whatever future is currently being awaited. This is something JavaScript promises still can't do natively.
+
+## The history
+
+The path to async/await in Perl is worth knowing:
+
+**2012** — Paul Evans releases `Future` on CPAN. A promise implementation, event-loop independent.
+
+**2017** — Paul Evans releases `Future::AsyncAwait` on CPAN, backed by a Perl Foundation grant. The implementation is XS, manipulating Perl's internal interpreter state to suspend and resume subs.
+
+**2018** — Joel Berger releases `Mojo::AsyncAwait`, an async/await for Mojolicious. Uses `Coro` (green threads) as its backend. Works, but Coro is controversial — it patches the Perl interpreter in invasive ways.
+
+**2019** — Mojolicious 8.28 adds the `AWAIT_*` protocol to `Mojo::Promise`, allowing `Future::AsyncAwait` to drive it directly. `Mojo::AsyncAwait` becomes a thin wrapper that just loads the right backend.
+
+**Today** — `Future::AsyncAwait` is at version 0.71, battle-tested, works with `Syntax::Keyword::Try`, `Object::Pad`, `Syntax::Keyword::Defer`, and `Syntax::Keyword::Dynamically`. The eventual plan is to move the suspend/resume logic into Perl core.
+
+## The rough edges
+
+It's not all smooth:
+
+- **`await` inside `map`/`grep` doesn't work.** The XS can't properly detect and restore the map/grep context. Workaround: rewrite as a `foreach` loop with `push`.
+- **`local` across `await` is unsupported.** The savestack (Perl's mechanism for `local`) can't be cleanly suspended. Use lexicals instead.
+- **`@_` isn't preserved across `await` on Perl < 5.24.** Unpack arguments into lexicals early.
+- **Still marked as "active development."** Though at version 0.71 with years of production use, the POD still carries the caveat.
+
+These are real limitations, but they're well-documented and have clear workarounds. The `map`/`grep` restriction is the most annoying in practice — you have to rewrite idiomatic Perl into a C-style loop. `Future::Utils::fmap` provides a concurrent alternative that's often better anyway.
+
+## What it means
+
+Perl's async/await is arguably more composable than JavaScript's. The `AWAIT_*` protocol means any class can become awaitable — not just one blessed Promise type. The event loop independence means your async code isn't married to a framework. And the integration with `Syntax::Keyword::Try`, `Object::Pad`, and other Evans modules means the pieces fit together without seams.
