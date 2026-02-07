@@ -1,0 +1,26 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const allLinks = await getCollection("links");
+allLinks.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+function formatDate(date: Date): string {
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+---
+
+<Layout title="Links">
+    <h1>Links</h1>
+
+    <ul>
+        {allLinks.map(({ data }) => (
+            <li>
+                <a href={data.url} target="_blank" rel="noopener noreferrer">{data.title}</a>
+                <small>({formatDate(data.date)})</small>
+                <br />
+                <small>{data.description}</small>
+            </li>
+        ))}
+    </ul>
+</Layout>

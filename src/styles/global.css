@@ -1,16 +1,54 @@
 :root {
     --bg: hsl(0 0% 7%);
     --fg: hsl(0 0% 80%);
-    --fg-dim: hsl(0 0% 40%);
+    --fg-dim: hsl(0 0% 49%);
     --border: hsl(0 0% 20%);
-    --visited: hsl(260 40% 75%);
+    --link: hsl(220 70% 58%);
+    --visited: hsl(260 40% 60%);
 }
 
-html { font-family: monospace; background: var(--bg); color: var(--fg); height: 100%; }
-a:visited { color: var(--visited); }
-body { max-width: var(--content-width, 72ch); margin: 0 auto; padding: 1rem; min-height: 100%; display: flex; flex-direction: column; }
-main { flex: 1; }
-pre { overflow-x: auto; }
-img { max-width: 100%; }
-nav a { margin-right: 1ch; }
-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border); font-size: small; color: var(--fg-dim); }
+html {
+    font-family: monospace;
+    background: var(--bg);
+    color: var(--fg);
+    height: 100%;
+}
+a {
+    color: var(--link);
+}
+a:visited {
+    color: var(--visited);
+}
+body {
+    max-width: 72ch;
+    margin: 0 auto;
+    padding: 1rem;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+main {
+    flex: 1;
+    margin: 0 auto; /* Not sure yet about whether I prefer this or same layout everywhere */
+}
+pre {
+    overflow-x: auto;
+}
+img {
+    max-width: 100%;
+}
+nav {
+    text-align: center;
+    padding-bottom: 1rem;
+}
+nav a {
+    margin-right: 1ch;
+}
+footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: small;
+    color: var(--fg-dim);
+    text-align: center;
+}

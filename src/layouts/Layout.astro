@@ -5,20 +5,17 @@ import "../styles/global.css";
 
 interface Props {
     title: string;
-    narrow?: boolean;
 }
 
-const { title, narrow } = Astro.props;
+const { title } = Astro.props;
 
-const home = '~/paulderscheid.xyz';
+const home = "~/paulderscheid.xyz";
 const navLinks = [
-    { href: '/about', text: '/about' },
-    { href: '/blog', text: '/blog' },
-    { href: 'mailto:me@paulderscheid.xyz', text: '/mail' },
+    { href: "/about", text: "/about" },
+    { href: "/blog", text: "/blog" },
+    { href: "/links", text: "/links" },
+    { href: "mailto:me@paulderscheid.xyz", text: "/mail" },
 ];
-
-const gap = 1; // CSS: nav a { margin-right: 1ch }
-const navWidth = home.length + navLinks.reduce((acc, l) => acc + gap + l.text.length, 0) + gap;
 ---
 
 <!doctype html>
@@ -32,9 +29,7 @@ const navWidth = home.length + navLinks.reduce((acc, l) => acc + gap + l.text.le
         <title>{title}</title>
     </head>
     <body>
-        {narrow && <Fragment set:html={`<style>:root{--content-width:${navWidth}ch}</style>`} />}
         <Nav home={home} links={navLinks} />
-        <hr />
         <main>
             <slot />
         </main>
