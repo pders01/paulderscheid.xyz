@@ -6,4 +6,8 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
     site: "https://paulderscheid.xyz",
     integrations: [mdx(), sitemap()],
+    compressHTML: true,
+    build: {
+        inlineStylesheets: "always",
+    },
 });
