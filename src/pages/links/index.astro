@@ -12,6 +12,8 @@ const allTags = [...new Set(allLinks.flatMap((link) => link.data.tags ?? []))].s
 <Layout title="Links">
     <h1>Links</h1>
 
+    <p><small>Just stuff I found interesting. No endorsement or affiliation.</small></p>
+
     {allTags.length > 0 && (
         <p>
             {allTags.map((tag, i) => (
