@@ -1,0 +1,27 @@
+[
+    {
+        "title": "perldoc.perl.org",
+        "url": "https://perldoc.perl.org/",
+        "note": "The official docs. Better than you think."
+    },
+    {
+        "title": "metacpan.org",
+        "url": "https://metacpan.org/",
+        "note": "CPAN search done right."
+    },
+    {
+        "title": "Perl Weekly",
+        "url": "https://perlweekly.com/",
+        "note": "Curated newsletter, consistently good."
+    },
+    {
+        "title": "blogs.perl.org",
+        "url": "https://blogs.perl.org/",
+        "note": "Community blogs."
+    },
+    {
+        "title": "Learn Perl in Y Minutes",
+        "url": "https://learnxinyminutes.com/perl/",
+        "note": "Short but good."
+    }
+]
