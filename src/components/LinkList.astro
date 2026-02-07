@@ -1,0 +1,34 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+    links: CollectionEntry<"links">[];
+}
+
+const { links } = Astro.props;
+
+function formatDate(date: Date): string {
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+---
+
+<ul style="list-style: none; padding-left: 0;">
+    {links.map(({ data }) => (
+        <li style="margin-bottom: 1.5rem;">
+            <a href={data.url} target="_blank" rel="noopener noreferrer">{data.title}</a>
+            <small>({formatDate(data.date)})</small>
+            <br />
+            <small>{data.description}</small>
+            {data.tags && data.tags.length > 0 && (
+                <br />
+                <small>
+                    {data.tags.map((tag, i) => (
+                        <>
+                            <a href={`/links/tag/${tag}`}>#{tag}</a>{i < data.tags!.length - 1 && " "}
+                        </>
+                    ))}
+                </small>
+            )}
+        </li>
+    ))}
+</ul>

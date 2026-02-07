@@ -1,0 +1,30 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import LinkList from "../../../components/LinkList.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+    const allLinks = await getCollection("links");
+    const tags = [...new Set(allLinks.flatMap((link) => link.data.tags ?? []))];
+
+    return tags.map((tag) => ({
+        params: { tag },
+        props: {
+            links: allLinks
+                .filter((link) => link.data.tags?.includes(tag))
+                .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()),
+        },
+    }));
+}
+
+const { tag } = Astro.params;
+const { links } = Astro.props;
+---
+
+<Layout title={`Links — #${tag}`}>
+    <h1>Links — #{tag}</h1>
+
+    <LinkList links={links} />
+
+    <p><a href="/links">&larr; all links</a></p>
+</Layout>

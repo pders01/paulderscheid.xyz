@@ -1,0 +1,26 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import LinkList from "../../components/LinkList.astro";
+import { getCollection } from "astro:content";
+
+const allLinks = await getCollection("links");
+allLinks.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+const allTags = [...new Set(allLinks.flatMap((link) => link.data.tags ?? []))].sort();
+---
+
+<Layout title="Links">
+    <h1>Links</h1>
+
+    {allTags.length > 0 && (
+        <p>
+            {allTags.map((tag, i) => (
+                <>
+                    <a href={`/links/tag/${tag}`}>#{tag}</a>{i < allTags.length - 1 && " "}
+                </>
+            ))}
+        </p>
+    )}
+
+    <LinkList links={allLinks} />
+</Layout>
