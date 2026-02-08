@@ -56,12 +56,18 @@ img {
 }
 
 nav {
-    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 1ch;
     padding-bottom: 1rem;
 }
 
-nav a {
-    margin-right: 1ch;
+nav a:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 footer {
