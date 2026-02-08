@@ -24,7 +24,7 @@ given ($value) {
 }
 ```
 
-The problem was that `~~` tried to be smart about what kind of comparison to do based on *both* operands. String vs number vs array vs hash vs regex vs object — the interaction matrix was enormous and impossible to hold in your head. From `perlop`:
+The problem was that `~~` tried to be smart about what kind of comparison to do based on _both_ operands. String vs number vs array vs hash vs regex vs object — the interaction matrix was enormous and impossible to hold in your head. From `perlop`:
 
 > The behaviour of a smart match depends on what type of thing its arguments are.
 
@@ -203,7 +203,7 @@ match point {
 }
 ```
 
-The match arm simultaneously tests the shape *and* binds variables from within it. Elixir does the same:
+The match arm simultaneously tests the shape _and_ binds variables from within it. Elixir does the same:
 
 ```elixir
 case response do

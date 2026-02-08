@@ -202,7 +202,7 @@ function listPerlResources() {
 function removePerlResources(targets) {
     const resources = loadPerlResources();
     const remaining = resources.filter(
-        (r) => !targets.some((t) => r.url === t || r.title.toLowerCase().includes(t.toLowerCase())),
+        (r) => !targets.some((t) => r.url === t || r.title.toLowerCase().includes(t.toLowerCase()))
     );
     const removed = resources.length - remaining.length;
     if (removed === 0) {
@@ -256,7 +256,7 @@ if (positional.length === 0) {
     console.error("  pnpm bm list");
     console.error("  pnpm bm remove <url-or-slug>...");
     console.error("");
-    console.error("  pnpm bm --perl <url>... [--note \"description\"]");
+    console.error('  pnpm bm --perl <url>... [--note "description"]');
     console.error("  pnpm bm --perl list");
     console.error("  pnpm bm --perl remove <url-or-title>...");
     process.exit(1);

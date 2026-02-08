@@ -159,23 +159,23 @@ tidy_whitespace     = true
 
 ```yaml
 steps:
-  - uses: shogo82148/actions-setup-perl@v1
-    with:
-      perl-version: '5.36'
+    - uses: shogo82148/actions-setup-perl@v1
+      with:
+          perl-version: "5.36"
 
-  - name: Install dependencies
-    run: |
-      cpanm -n Carton
-      carton install --deployment
+    - name: Install dependencies
+      run: |
+          cpanm -n Carton
+          carton install --deployment
 
-  - name: Run format check
-    run: carton exec -- just fmt
+    - name: Run format check
+      run: carton exec -- just fmt
 
-  - name: Run linter
-    run: carton exec -- just lint
+    - name: Run linter
+      run: carton exec -- just lint
 
-  - name: Run tests
-    run: carton exec -- just test
+    - name: Run tests
+      run: carton exec -- just test
 ```
 
 GitHub Actions with `shogo82148/actions-setup-perl` for Perl installation, Carton for dependencies, and the same `just` commands you run locally. The CI runs `fmt`, `lint`, and `test` — the same `just check` sequence. If it passes on your machine, it passes in CI.

@@ -79,7 +79,7 @@ The object overloads boolean, string, numeric, and dereference operators. A `fai
 
 Ricardo Signes, who took over maintenance, deprecated it. The POD reads:
 
-> *Return::Value was a bad idea. I'm sorry that I had it, sorry that I followed through, and sorry that it got used in other useful libraries. [...] Objects that are false are just a dreadful idea in almost every circumstance, especially when the object has useful properties. Please do not use this library.*
+> _Return::Value was a bad idea. I'm sorry that I had it, sorry that I followed through, and sorry that it got used in other useful libraries. [...] Objects that are false are just a dreadful idea in almost every circumstance, especially when the object has useful properties. Please do not use this library._
 
 The problem: polymorphic return values break Perl's expectations. Code that checks `if ($result)` might be testing truthiness or checking for an object — and the two mean different things. Overloading made the simple case clever and the complex case confusing. It's a good lesson in fighting the language instead of working with it.
 
@@ -168,7 +168,7 @@ my ($data, $err) = combine(
 my ($user, $orders, $settings) = @$data unless $err;
 ```
 
-And `combine_with_all_errors` does the same but collects *every* error instead of short-circuiting on the first — exactly what you want for form validation where you report all failures at once.
+And `combine_with_all_errors` does the same but collects _every_ error instead of short-circuiting on the first — exactly what you want for form validation where you report all failures at once.
 
 Optional type assertions via `result_for` let you enforce return types in development:
 

@@ -11,7 +11,7 @@ I have opinions about how Perl should be written. Hashrefs over bare hashes. `ma
 
 I also had benchmarks that proved all of this. The problem: I wrote them to confirm what I already believed. Every test was designed for my preferred pattern to win. That's not benchmarking, that's theater.
 
-So I tried the opposite. I wrote adversarial benchmarks — scenarios designed to make my patterns *lose*. If they survive, the conclusion is earned. If they don't, I learn where the line actually is.
+So I tried the opposite. I wrote adversarial benchmarks — scenarios designed to make my patterns _lose_. If they survive, the conclusion is earned. If they don't, I learn where the line actually is.
 
 ## Setup
 
@@ -266,7 +266,7 @@ check_first 240603/s        328%          --
 
 328% faster. `eval_catch` falls off a cliff.
 
-**Verdict:** The interesting finding isn't that checks win — it's *when* they start winning. At 0% errors, there's no difference. The cost isn't the eval setup; it's the throw. Every `die` allocates, unwinds, and copies `$@`. Preventive checks scale flat; exceptions scale with the error rate. Check first when errors are expected. `eval` is fine for genuinely exceptional cases.
+**Verdict:** The interesting finding isn't that checks win — it's _when_ they start winning. At 0% errors, there's no difference. The cost isn't the eval setup; it's the throw. Every `die` allocates, unwinds, and copies `$@`. Preventive checks scale flat; exceptions scale with the error rate. Check first when errors are expected. `eval` is fine for genuinely exceptional cases.
 
 ## 4. Dispatch tables vs if/else
 
@@ -545,6 +545,6 @@ Positional is 2.4x faster than named ref. The cost of readability is real.
 
 Four of my six preferences survived adversarial testing. One — dispatch tables — survived with a clear boundary (don't bother below ~5 branches). One — hash slice destructuring — lost outright on performance and I use it anyway.
 
-The bigger lesson: confirmation bias in benchmarking is easy. Every benchmark I'd written before this one was designed for my patterns to win. Testing the *other* direction found real nuance in every single case. Even the patterns that won had scenarios where they lost or tied.
+The bigger lesson: confirmation bias in benchmarking is easy. Every benchmark I'd written before this one was designed for my patterns to win. Testing the _other_ direction found real nuance in every single case. Even the patterns that won had scenarios where they lost or tied.
 
 If you benchmark your own code, try to break your hypothesis. If it survives, you've earned the conclusion. If it doesn't, you've learned something better than being right.
