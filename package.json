@@ -14,15 +14,15 @@
         "bm": "node scripts/link.mjs"
     },
     "dependencies": {
-        "@astrojs/check": "^0.9.5",
-        "@astrojs/mdx": "^4.3.8",
+        "@astrojs/check": "^0.9.6",
+        "@astrojs/mdx": "^4.3.13",
         "@astrojs/rss": "^4.0.15",
-        "@astrojs/sitemap": "^3.6.0",
-        "astro": "^5.15.1",
+        "@astrojs/sitemap": "^3.7.0",
+        "astro": "^5.18.0",
         "typescript": "^5.9.3"
     },
     "devDependencies": {
-        "oxfmt": "^0.28.0",
-        "oxlint": "^1.43.0"
+        "oxfmt": "^0.36.0",
+        "oxlint": "^1.51.0"
     }
 }
