@@ -39,7 +39,7 @@ function parseArgs(args) {
             note = args[++i] ?? null;
         } else if (args[i] === "--perl") {
             section = "perl";
-        } else if (args[i] === "remove" || args[i] === "list") {
+        } else if (args[i] === "remove" || args[i] === "list" || args[i] === "dedup") {
             action = args[i];
         } else if (!args[i].startsWith("--")) {
             positional.push(args[i]);
@@ -240,6 +240,81 @@ async function addPerlResources(urls, note) {
 }
 
 // ---------------------------------------------------------------------------
+// Dedup — check HN IDs against existing links
+// ---------------------------------------------------------------------------
+
+const HN_ITEM_API = "https://hacker-news.firebaseio.com/v0/item";
+const HN_ITEM_URL_BASE = "https://news.ycombinator.com/item?id=";
+
+function normalizeUrl(url) {
+    return url
+        .replace(/\/+$/, "")
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .toLowerCase();
+}
+
+function loadExistingUrls() {
+    if (!existsSync(LINKS_DIR)) return new Set();
+    const files = readdirSync(LINKS_DIR).filter((f) => f.endsWith(".mdx"));
+    const urls = new Set();
+    for (const f of files) {
+        const content = readFileSync(join(LINKS_DIR, f), "utf8");
+        const match = content.match(/^url:\s*"?([^\s"]+)"?/m);
+        if (match) urls.add(normalizeUrl(match[1]));
+    }
+    return urls;
+}
+
+async function fetchHnItem(id) {
+    const res = await fetch(`${HN_ITEM_API}/${id}.json`);
+    if (!res.ok) throw new Error(`HN API ${res.status} for item ${id}`);
+    const item = await res.json();
+    if (!item) throw new Error(`HN item ${id} not found`);
+    return item;
+}
+
+async function dedupHnIds(ids) {
+    const numericIds = ids.filter((id) => /^\d+$/.test(id));
+    if (numericIds.length === 0) {
+        console.error("error: no valid HN item IDs provided");
+        process.exit(1);
+    }
+
+    console.log(`Checking ${numericIds.length} HN items against ${LINKS_DIR}...\n`);
+
+    const existing = loadExistingUrls();
+    const items = await Promise.all(numericIds.map(fetchHnItem));
+
+    const dupes = [];
+    const fresh = [];
+
+    for (const item of items) {
+        const url = item.url ?? `${HN_ITEM_URL_BASE}${item.id}`;
+        if (existing.has(normalizeUrl(url))) {
+            dupes.push({ item, url });
+        } else {
+            fresh.push({ item, url });
+        }
+    }
+
+    if (dupes.length > 0) {
+        console.log(`DUPLICATES (${dupes.length}):`);
+        for (const { item, url } of dupes) {
+            console.log(`  ${item.title ?? `HN:${item.id}`}\n    → ${url}`);
+        }
+        console.log();
+    }
+
+    console.log(`NEW (${fresh.length}):`);
+    for (const { item, url } of fresh) {
+        console.log(`  ${item.id}  ${item.title ?? "(no title)"}\n    → ${url}`);
+    }
+
+    console.log(`\n${dupes.length} duplicates, ${fresh.length} new`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -255,11 +330,17 @@ if (positional.length === 0) {
     console.error("  pnpm bm <url>... [--tags tag1,tag2]");
     console.error("  pnpm bm list");
     console.error("  pnpm bm remove <url-or-slug>...");
+    console.error("  pnpm bm dedup <hn-id>...          Check HN IDs against existing links");
     console.error("");
     console.error('  pnpm bm --perl <url>... [--note "description"]');
     console.error("  pnpm bm --perl list");
     console.error("  pnpm bm --perl remove <url-or-title>...");
     process.exit(1);
+}
+
+if (action === "dedup") {
+    await dedupHnIds(positional);
+    process.exit(0);
 }
 
 if (action === "remove") {
