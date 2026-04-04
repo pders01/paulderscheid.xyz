@@ -1,12 +1,12 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
     const allBlogPosts = await getCollection("blog");
     return allBlogPosts.map((entry) => {
         return {
-            params: { slug: entry.slug },
+            params: { slug: entry.id },
             props: { entry },
         };
     });
@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { title, date, author } = entry.data;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 function formatDate(d: Date): string {
     return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });

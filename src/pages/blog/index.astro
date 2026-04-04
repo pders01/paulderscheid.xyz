@@ -14,9 +14,9 @@ function formatDate(date: Date): string {
     <h1>Blog</h1>
 
     <ul>
-        {allBlogPosts.map(({ data, collection, slug }) => (
+        {allBlogPosts.map(({ data, id }) => (
             <li>
-                <a href={`/${collection}/${slug}`}>{data.title}</a>
+                <a href={`/blog/${id}`}>{data.title}</a>
                 <small>({formatDate(data.date)})</small>
             </li>
         ))}

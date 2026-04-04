@@ -51,9 +51,9 @@ const resources = JSON.parse(fs.readFileSync(resourcesFile, "utf8"));
         <>
             <h2>Posts</h2>
             <ul>
-                {allPerlPosts.map(({ data, collection, slug }) => (
+                {allPerlPosts.map(({ data, id }) => (
                     <li>
-                        <a href={`/${collection}/${slug}`}>{data.title}</a>
+                        <a href={`/perl/${id}`}>{data.title}</a>
                         <small>({formatDate(data.date)})</small>
                     </li>
                 ))}
