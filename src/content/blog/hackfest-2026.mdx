@@ -1,0 +1,94 @@
+---
+layout: ../../layouts/Post.astro
+title: "Koha Hackfest 2026"
+author: "Paul Derscheid"
+date: "11 Apr 2026"
+snippet: "Such a calm one this year"
+---
+
+Loved every minute of this year's week in Marseille.
+
+## The Hotel
+
+This is a fun one, the furnishing was great! Classy. The location of [New Hotel Le Quai](https://www.new-hotel.com/en/hotels-in-marseille/le-quai-vieux-port/)
+was even better than Ibis Vieux Port because it's located right in the middle. It doesn't get any more central than this.
+The only thing is that the coffee maker was cursed in some way. 😅
+There was only one morning where the thing actually worked reliably.
+I later googled it and it seems the chain is first and foremost interested in its interior design, which shows.
+But coffee needs to work for me to work.
+
+## Hackfest
+
+But in the end it doesn't matter because we get loaded on coffee at [Biblibre's](https://www.biblibre.com/fr/) anyway.
+
+### Atmosphere
+
+The atmosphere was very relaxed. It was already quite warm for April, though I am of course used to the weather in
+Germany. Could be a misperception on my part, but I think LLMs, a.k.a. AI, really help, at least in some way.
+Big projects that plough through the entire codebase aren't as scary anymore. Some missing domain knowledge doesn't
+require endless googling. It's just a prompt away to at least get the rough idea.
+
+### The Codebase
+
+The codebase is changing at a quite fast pace. Numerous Vue modules and an entire custom frontend framework built on top
+that actually works. I sprinkled in some bugs that are intended to allow plugin developers to participate as well, check out
+[Bug 42150](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=42150) and the related [Bug 42189](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=42189).
+
+### Frontend Cleanup
+
+There's also a push to make the entire frontend code more modular by ending the mixture of TT and JS and instead communicate via "data bridge", like:
+
+```html
+  ...
+</div>
+
+...
+
+<script>
+  const myVariable = "[% myVariable | html %]"; // For communication
+</script>
+
+<script>
+  const myOtherVariable = doSomething(myVariable); // Use here
+</script>
+```
+
+Or even:
+
+```html
+  ...
+</div>
+
+...
+
+<script id="some-id" type="application/json">
+  [% myJSONPayload | html %]
+</script>
+
+<script>
+  const myOtherVariable = JSON.parse(document.getElementById('some-id').textContent);
+  ...
+</script>
+```
+
+I like it. Better code organization and we can also tidy our script tags since they won't contain any nested TT anymore. And
+the scripts themselves can be cleanly moved to dedicated files. This will make rebasing and cherry picking from upstream so much easier.
+For more info, check out [Bug 41324](https://bugs.koha-community.org/bugzilla3/show_bug.cgi?id=41324).
+
+### SQL Search
+
+There's the idea and a prototype for a SQL-based search that will allow us to deprecate Zebra. I really like the idea since it's
+a simplification of the Koha stack for libraries that do not need Elasticsearch yet. Mark from [HKS3](https://www.koha-support.eu) built
+a working demo in just a day and it could already do what it needs to. It's based on the prior work from a [plugin to normalize MARC data](https://github.com/HKS3/koha-normalize-marc2db)
+into structured database tables. A related goal is to rewrite the search module for this new development and migrate ES to it once it's stable.
+
+## Beyond work
+
+The best part of every day is of course not the code, but the people. So many great conversations to have with folks from all over the world.
+It was also incredibly windy that week, not that surprising for a city on the seaside, but still pretty rough if you don't expect it!
+
+Big shoutout to Paul and Biblibre for hosting. Thank you!
+
+---
+
+The [better version of this (with pictures)](https://domm.plix.at/perl/2026_03_koha_hackfest.html) can be found at domm's site 😄
