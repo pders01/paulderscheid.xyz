@@ -32,6 +32,7 @@ function parseArgs(args) {
     let note = null;
     let section = "links";
     let action = "add";
+    let fromFile = null;
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--tags") {
             tags = args[++i]?.split(",") ?? null;
@@ -39,13 +40,15 @@ function parseArgs(args) {
             note = args[++i] ?? null;
         } else if (args[i] === "--perl") {
             section = "perl";
+        } else if (args[i] === "--from-file") {
+            fromFile = args[++i] ?? null;
         } else if (args[i] === "remove" || args[i] === "list" || args[i] === "dedup") {
             action = args[i];
         } else if (!args[i].startsWith("--")) {
             positional.push(args[i]);
         }
     }
-    return { action, positional, tags, note, section };
+    return { action, positional, tags, note, section, fromFile };
 }
 
 async function fetchMeta(url) {
@@ -274,8 +277,16 @@ async function fetchHnItem(id) {
     return item;
 }
 
-async function dedupHnIds(ids) {
-    const numericIds = ids.filter((id) => /^\d+$/.test(id));
+async function dedupHnIds(ids, fromFile) {
+    if (fromFile) {
+        const lines = readFileSync(fromFile, "utf8")
+            .split("\n")
+            .map((l) => l.trim())
+            .filter((l) => l && !l.startsWith("#"));
+        ids.push(...lines);
+    }
+
+    const numericIds = [...new Set(ids.filter((id) => /^\d+$/.test(id)))];
     if (numericIds.length === 0) {
         console.error("error: no valid HN item IDs provided");
         process.exit(1);
@@ -318,19 +329,19 @@ async function dedupHnIds(ids) {
 // Main
 // ---------------------------------------------------------------------------
 
-const { action, positional, tags, note, section } = parseArgs(process.argv.slice(2));
+const { action, positional, tags, note, section, fromFile } = parseArgs(process.argv.slice(2));
 
 if (action === "list") {
     section === "perl" ? listPerlResources() : listLinks();
     process.exit(0);
 }
 
-if (positional.length === 0) {
+if (positional.length === 0 && !(action === "dedup" && fromFile)) {
     console.error("Usage:");
     console.error("  pnpm bm <url>... [--tags tag1,tag2]");
     console.error("  pnpm bm list");
     console.error("  pnpm bm remove <url-or-slug>...");
-    console.error("  pnpm bm dedup <hn-id>...          Check HN IDs against existing links");
+    console.error("  pnpm bm dedup <hn-id>... [--from-file <path>]   Check HN IDs against existing links");
     console.error("");
     console.error('  pnpm bm --perl <url>... [--note "description"]');
     console.error("  pnpm bm --perl list");
@@ -339,7 +350,7 @@ if (positional.length === 0) {
 }
 
 if (action === "dedup") {
-    await dedupHnIds(positional);
+    await dedupHnIds(positional, fromFile);
     process.exit(0);
 }
 
