@@ -8,7 +8,6 @@
     },
     "scripts": {
         "dev": "astro dev",
-        "start": "serve -s dist -l tcp://0.0.0.0:${PORT:-3000}",
         "build": "astro build",
         "preview": "astro preview",
         "astro": "astro",
@@ -26,8 +25,7 @@
     },
     "devDependencies": {
         "oxfmt": "^0.48.0",
-        "oxlint": "^1.63.0",
-        "serve": "^14.2.6"
+        "oxlint": "^1.63.0"
     },
     "pnpm": {
         "overrides": {

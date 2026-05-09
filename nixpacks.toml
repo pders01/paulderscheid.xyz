@@ -6,6 +6,3 @@ cmds = ["pnpm install --frozen-lockfile"]
 
 [phases.build]
 cmds = ["pnpm run build"]
-
-[start]
-cmd = "pnpm run start"
