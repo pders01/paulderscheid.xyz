@@ -1,6 +1,4 @@
 ---
-import Nav from "../components/Nav.astro";
-import Footer from "../components/Footer.astro";
 import "../styles/global.css";
 
 interface Props {
@@ -8,15 +6,6 @@ interface Props {
 }
 
 const { title } = Astro.props;
-
-const home = "~/paulderscheid.xyz";
-const navLinks = [
-    { href: "/about", text: "/about" },
-    { href: "/blog", text: "/blog" },
-    { href: "/perl", text: "/perl" },
-    { href: "/links", text: "/links" },
-    { href: "mailto:me@paulderscheid.xyz", text: "/mail" },
-];
 ---
 
 <!doctype html>
@@ -27,14 +16,17 @@ const navLinks = [
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="sitemap" href="/sitemap-index.xml" />
         <link rel="alternate" type="application/rss+xml" title="paul derscheid" href="/rss.xml" />
-        <meta name="description" content="Paul Derscheid — Software Engineer, Koha contributor." />
+        <meta name="description" content="Paul Derscheid" />
         <title>{title}</title>
     </head>
     <body>
-        <Nav home={home} links={navLinks} />
         <main>
             <slot />
         </main>
-        <Footer />
+        <footer>
+            <a href="/legal">/impressum</a>
+            <a href="/privacy-policy">/datenschutz</a>
+            <a href="/takedown">/takedown</a>
+        </footer>
     </body>
 </html>
